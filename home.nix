@@ -148,4 +148,11 @@
   };
 
   programs.home-manager.enable = true;
+
+  # ---------------------------------------------------------------------------
+  # Files
+  # ---------------------------------------------------------------------------
+
+  home.file.".AGENTS.md".source = ./files/AGENTS.md;
+  home.file.".CLAUDE.md".source = ./files/AGENTS.md;
 }
