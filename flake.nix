@@ -7,28 +7,30 @@
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs = {
-    self,
-    nixpkgs,
-    nixos-wsl,
-    home-manager,
-    ...
-  }: {
-    nixosConfigurations = {
-      nixos = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
-        modules = [
-          nixos-wsl.nixosModules.default
-          ./configuration.nix
+  outputs =
+    {
+      self,
+      nixpkgs,
+      nixos-wsl,
+      home-manager,
+      ...
+    }:
+    {
+      nixosConfigurations = {
+        nixos = nixpkgs.lib.nixosSystem {
+          system = "aarch64-linux";
+          modules = [
+            nixos-wsl.nixosModules.default
+            ./configuration.nix
 
-          home-manager.nixosModules.home-manager
-          {
-            home-manager.useGlobalPkgs = true;
-            home-manager.useUserPackages = true;
-            home-manager.users.ezhao = import ./home.nix;
-          }
-        ];
+            home-manager.nixosModules.home-manager
+            {
+              home-manager.useGlobalPkgs = true;
+              home-manager.useUserPackages = true;
+              home-manager.users.ezhao = import ./home.nix;
+            }
+          ];
+        };
       };
     };
-  };
 }

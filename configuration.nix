@@ -3,13 +3,17 @@
   lib,
   pkgs,
   ...
-}: {
+}:
+{
   wsl.enable = true;
   wsl.defaultUser = "ezhao";
 
   users.users.ezhao = {
     isNormalUser = true;
-    extraGroups = ["wheel" "docker"];
+    extraGroups = [
+      "wheel"
+      "docker"
+    ];
     shell = pkgs.zsh;
   };
 

@@ -2,7 +2,8 @@
   config,
   pkgs,
   ...
-}: {
+}:
+{
   home.username = "ezhao";
   home.homeDirectory = "/home/ezhao";
   home.stateVersion = "26.05";
@@ -43,6 +44,9 @@
     stylua # lua formatter
     prettierd
     alejandra # nix formatter
+
+    # Utilities
+    gh
 
     # Agents
     opencode
@@ -130,7 +134,17 @@
       size = 1000;
       save = 1000;
       path = "${config.home.homeDirectory}/.zsh_history";
-      ignorePatterns = ["exit" "cd" "ls" "bg" "fg" "history" "f" "fd" "vim"];
+      ignorePatterns = [
+        "exit"
+        "cd"
+        "ls"
+        "bg"
+        "fg"
+        "history"
+        "f"
+        "fd"
+        "vim"
+      ];
     };
 
     shellAliases = {
