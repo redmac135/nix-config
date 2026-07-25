@@ -43,6 +43,9 @@
     stylua # lua formatter
     prettierd
     alejandra # nix formatter
+
+    # Agents
+    opencode
   ];
 
   # ---------------------------------------------------------------------------
