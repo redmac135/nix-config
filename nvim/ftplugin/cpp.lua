@@ -10,3 +10,5 @@ lspconfig.clangd.setup({
 		end
 	end,
 })
+
+vim.treesitter.start()

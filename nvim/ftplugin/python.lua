@@ -5,3 +5,5 @@ lspconfig.pyright.setup({
 	capabilities = capabilities,
 	single_file_support = true,
 })
+
+vim.treesitter.start()
