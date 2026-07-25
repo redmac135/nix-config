@@ -10,22 +10,22 @@ end, { desc = "Format Document", noremap = true, silent = true })
 vim.keymap.set("n", "<Esc>", ":nohlsearch<CR><Esc>", { desc = "Clear search highlight", noremap = true, silent = true })
 
 -- Show code actions
-vim.keymap.set("n", "ca", vim.lsp.buf.code_action, { desc = "Code Action", noremap = true })
+vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action, { desc = "Code Action", noremap = true })
 
 -- Show line diagnostics in a popup
-vim.keymap.set("n", "cd", vim.diagnostic.open_float, { desc = "Line Diagnostics", noremap = true })
+vim.keymap.set("n", "<leader>cd", vim.diagnostic.open_float, { desc = "Line Diagnostics", noremap = true })
 
 -- Go to definition
-vim.keymap.set("n", "gd", vim.lsp.buf.definition, { desc = "Go to Definition", noremap = true })
+vim.keymap.set("n", "<leader>gd", vim.lsp.buf.definition, { desc = "Go to Definition", noremap = true })
 
 -- Find references
-vim.keymap.set("n", "gr", vim.lsp.buf.references, { desc = "Find References", noremap = true })
+vim.keymap.set("n", "<leader>gr", vim.lsp.buf.references, { desc = "Find References", noremap = true })
 
 -- Jump to type definition
-vim.keymap.set("n", "gt", vim.lsp.buf.type_definition, { desc = "Type Definition", noremap = true })
+vim.keymap.set("n", "<leader>gt", vim.lsp.buf.type_definition, { desc = "Type Definition", noremap = true })
 
 -- Rename symbol
-vim.keymap.set("n", "rn", vim.lsp.buf.rename, { desc = "Rename Symbol", noremap = true })
+vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename, { desc = "Rename Symbol", noremap = true })
 
 -- OIL KEYMAPS --
 vim.keymap.set("n", "<C-N>", ":Oil<CR>") -- Open Oil
