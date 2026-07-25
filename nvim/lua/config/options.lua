@@ -20,3 +20,6 @@ vim.o.termguicolors = true
 
 -- colorscheme
 vim.cmd.colorscheme("catppuccin-mocha")
+
+-- treesitter indentation
+vim.bo.indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
