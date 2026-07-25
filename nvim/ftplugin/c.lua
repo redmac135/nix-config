@@ -1,1 +1,1 @@
-nvim/ftplugin/cpp.lua
+vim.treesitter.start()

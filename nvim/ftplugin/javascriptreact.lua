@@ -1,1 +1,1 @@
-nvim/ftplugin/typescript.lua
+vim.treesitter.start()
