@@ -18,7 +18,7 @@
 
     # Language Runtimes
     nodejs_22
-    python312Full
+    python312
     deno
     bun
     go
