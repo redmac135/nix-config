@@ -56,7 +56,7 @@
     plugins = with pkgs.vimPlugins; [
       # UI & Theme
       snacks-nvim
-      vague-nvim
+      catppuccin-nvim
       oil-nvim
 
       # LSP & Formatting

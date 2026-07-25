@@ -1,5 +1,4 @@
 require('config.options')
-require('config.plugins')
 
 -- plugin configs
 require('config.plugins.snacks')
