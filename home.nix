@@ -54,25 +54,44 @@
 
     # Pre-compile Tree-sitter parsers into the Nix store
     plugins = with pkgs.vimPlugins; [
-      (nvim-treesitter.withPlugins (grammars:
-        with grammars; [
-          tree-sitter-bash
-          tree-sitter-c
-          tree-sitter-cpp
-          tree-sitter-css
-          tree-sitter-dockerfile
-          tree-sitter-html
-          tree-sitter-javascript
-          tree-sitter-json
-          tree-sitter-lua
-          tree-sitter-python
-          tree-sitter-rust
-          tree-sitter-svelte
-          tree-sitter-typescript
-          tree-sitter-yaml
-          tree-sitter-go
-          tree-sitter-nix
-        ]))
+      # UI & Theme
+      snacks-nvim
+      vague-nvim
+      oil-nvim
+
+      # LSP & Formatting
+      nvim-lspconfig
+      conform-nvim
+
+      # Mini suite
+      mini-nvim
+
+      # Completion & Snippets
+      nvim-cmp
+      cmp-nvim-lsp
+      luasnip
+      friendly-snippets
+
+      # Treesitter
+      nvim-ts-autotag
+      (nvim-treesitter.withPlugins (p: [
+        p.bash
+        p.c
+        p.cpp
+        p.css
+        p.dockerfile
+        p.go
+        p.html
+        p.javascript
+        p.json
+        p.lua
+        p.nix
+        p.python
+        p.rust
+        p.svelte
+        p.typescript
+        p.yaml
+      ]))
     ];
   };
 

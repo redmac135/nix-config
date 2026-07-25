@@ -17,3 +17,5 @@ vim.o.splitbelow = true
 
 -- for tmux true color support
 vim.o.termguicolors = true
+
+vim.cmd("colorscheme vague")
