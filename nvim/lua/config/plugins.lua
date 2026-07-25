@@ -8,27 +8,24 @@ vim.pack.add({
 	-- oil: file explorer
 	"https://github.com/stevearc/oil.nvim",
 
-	-- lsp, autocompletion, snippets, commenting, autopairs
+	-- lsp, formatting
 	"https://github.com/neovim/nvim-lspconfig",
+	"https://github.com/stevearc/conform.nvim",
+
+	-- mini suite
 	"https://github.com/nvim-mini/mini.comment",
 	"https://github.com/nvim-mini/mini.icons",
 	"https://github.com/nvim-mini/mini.pairs",
-	"https://github.com/stevearc/conform.nvim",
 
-	-- treesitter
+	-- treesitter & autotags
 	{ src = "https://github.com/nvim-treesitter/nvim-treesitter", branch = "main" },
-
-	-- snippets
-	"https://github.com/rafamadriz/friendly-snippets",
-
-	-- nvim-ts-autotag and autopairs
 	"https://github.com/windwp/nvim-ts-autotag",
-	"https://github.com/windwp/nvim-autopairs",
 
-	-- autocompletion
+	-- autocompletion & snippets
 	"https://github.com/hrsh7th/nvim-cmp",
 	"https://github.com/hrsh7th/cmp-nvim-lsp",
 	"https://github.com/L3MON4D3/LuaSnip",
+	"https://github.com/rafamadriz/friendly-snippets",
 })
 
 vim.cmd("colorscheme vague")
