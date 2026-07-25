@@ -11,10 +11,14 @@
     # Core
     git
     fd
+    ripgrep # required for neovim search / telescope
     lazygit
     lazydocker
+    cloudflared
 
     # Language Runtimes
+    nodejs_22
+    python312Full
     deno
     bun
     go
@@ -32,6 +36,7 @@
     bash-language-server
     clang-tools # provides clangd and clang-format
     cmake-language-server
+    rust-analyzer
 
     # Formatters & Linters
     ruff # replaces black + python linter
@@ -103,7 +108,7 @@
       size = 1000;
       save = 1000;
       path = "${config.home.homeDirectory}/.zsh_history";
-      ignorePatterns = [ "exit" "cd" "ls" "bg" "fg" "history" "f" "fd" "vim" ];
+      ignorePatterns = ["exit" "cd" "ls" "bg" "fg" "history" "f" "fd" "vim"];
     };
 
     shellAliases = {
