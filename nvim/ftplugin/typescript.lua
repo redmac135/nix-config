@@ -41,5 +41,3 @@ lspconfig.denols.setup({
 		unstable = true,
 	},
 })
-
-vim.treesitter.start()

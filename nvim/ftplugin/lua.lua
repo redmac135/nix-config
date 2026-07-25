@@ -15,5 +15,3 @@ lspconfig.lua_ls.setup({
 		},
 	},
 })
-
-vim.treesitter.start()
