@@ -24,7 +24,7 @@
     # Language Servers (LSPs)
     lua-language-server
     vscode-langservers-extracted # html, css, json
-    dockerfile-language-server-nodejs
+    dockerfile-language-server
     yaml-language-server
     svelte-language-server
     pyright
