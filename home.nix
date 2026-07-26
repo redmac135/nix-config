@@ -47,6 +47,7 @@
 
     # Utilities
     gh
+    taskwarrior3
 
     # Agents
     opencode
