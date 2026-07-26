@@ -55,8 +55,24 @@
   ];
 
   # ---------------------------------------------------------------------------
-  # Neovim & Tree-sitter Grammars
+  # Program configs
   # ---------------------------------------------------------------------------
+  programs.git = {
+    enable = true;
+    lfs.enable = true;
+    settings = {
+      user = {
+        name = "Ethan Zhao";
+        email = "ethan.yzhao@outlook.com";
+      };
+      core.editor = "neovim";
+      color.ui = true;
+      push.autoSetupRemote = true;
+      pull.rebase = true;
+      rebase.updateRefs = true;
+    };
+  };
+
   programs.neovim = {
     enable = true;
     defaultEditor = true;
@@ -106,10 +122,6 @@
 
   # Symlink Neovim config directory
   xdg.configFile."nvim".source = ./nvim;
-
-  # ---------------------------------------------------------------------------
-  # Shell Integrations
-  # ---------------------------------------------------------------------------
 
   programs.starship = {
     enable = true;
