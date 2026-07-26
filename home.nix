@@ -49,8 +49,9 @@
     gh
     taskwarrior3
 
-    # Agents
-    opencode
+    # https://github.com/numtide/llm-agents.nix
+    llmAgents.opencode
+    llmAgents.herdr
   ];
 
   # ---------------------------------------------------------------------------

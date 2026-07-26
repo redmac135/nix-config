@@ -5,6 +5,9 @@
 
     home-manager.url = "github:nix-community/home-manager";
     home-manager.inputs.nixpkgs.follows = "nixpkgs";
+
+    llm-agents.url = "github:numtide/llm-agents.nix";
+    llm-agents.inputs.nixpkgs.follows = "nixpkgs"; # must follow nixos-unsable
   };
 
   outputs =
@@ -13,6 +16,7 @@
       nixpkgs,
       nixos-wsl,
       home-manager,
+      llm-agents,
       ...
     }:
     {
@@ -28,6 +32,14 @@
               home-manager.useGlobalPkgs = true;
               home-manager.useUserPackages = true;
               home-manager.users.ezhao = import ./home.nix;
+            }
+
+            {
+              nixpkgs.overlays = [
+                (final: prev: {
+                  llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
+                })
+              ];
             }
           ];
         };
