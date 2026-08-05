@@ -180,6 +180,20 @@
       EDITOR = "nvim";
       MANPAGER = "nvim +Man!";
     };
+
+    initExtra = ''
+      # Autosuggestions strategy
+      ZSH_AUTOSUGGEST_STRATEGY=(history completion)
+      ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
+
+      # Enable menu selection for completions
+      zstyle ':completion:*' menu select
+
+      # Edit command line widget (Ctrl+X, then E to edit command in Neovim)
+      autoload -U edit-command-line
+      zle -N edit-command-line
+      bindkey '^Xe' edit-command-line
+    '';
   };
 
   programs.home-manager.enable = true;
