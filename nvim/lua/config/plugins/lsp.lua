@@ -1,7 +1,7 @@
 -- Diagnostics
 vim.diagnostic.config({
 	virtual_text = {
-		prefix = '●',
+		prefix = "●",
 	},
 	signs = true,
 	underline = true,
@@ -10,7 +10,7 @@ vim.diagnostic.config({
 })
 
 -- Global LSP capabilities from nvim-cmp
-vim.lsp.config('*', {
+vim.lsp.config("*", {
 	capabilities = require("cmp_nvim_lsp").default_capabilities(),
 })
 
@@ -32,3 +32,6 @@ vim.lsp.enable({
 	"ts_ls",
 	"yamlls",
 })
+
+-- Enable inline hints
+vim.lsp.inlay_hint.enable(true)
