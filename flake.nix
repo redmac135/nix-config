@@ -8,6 +8,9 @@
 
     llm-agents.url = "github:numtide/llm-agents.nix";
     llm-agents.inputs.nixpkgs.follows = "nixpkgs"; # must follow nixos-unsable
+
+    treehouse.url = "github:kunchenguid/treehouse";
+    treehouse.inputs.nixpkgs.follows = "nixpkgs";
   };
 
   outputs =
@@ -17,6 +20,7 @@
       nixos-wsl,
       home-manager,
       llm-agents,
+      treehouse,
       ...
     }:
     {
@@ -38,6 +42,7 @@
               nixpkgs.overlays = [
                 (final: prev: {
                   llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
+                  treehouse = treehouse.packages.${prev.stdenv.hostPlatform.system};
                 })
               ];
             }

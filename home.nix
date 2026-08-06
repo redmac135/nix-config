@@ -52,6 +52,9 @@
     # https://github.com/numtide/llm-agents.nix
     llmAgents.opencode
     llmAgents.herdr
+
+    # kunchenguid
+    treehouse.default
   ];
 
   # ---------------------------------------------------------------------------
@@ -181,7 +184,7 @@
       MANPAGER = "nvim +Man!";
     };
 
-    initExtra = ''
+    initContent = ''
       # Autosuggestions strategy
       ZSH_AUTOSUGGEST_STRATEGY=(history completion)
       ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
