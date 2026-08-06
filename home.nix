@@ -1,10 +1,8 @@
 {
   config,
-  lib,
   pkgs,
   ...
-}:
-{
+}: {
   home.username = "ezhao";
   home.homeDirectory = "/home/ezhao";
   home.stateVersion = "26.05";
@@ -57,20 +55,13 @@
 
     # kunchenguid
     treehouse.default
+    firstmate.no-mistakes
+    firstmate.gh-axi
+    firstmate.chrome-devtools-axi
+    firstmate.lavish-axi
+    firstmate.tasks-axi
+    firstmate.quota-axi
   ];
-
-  home.activation.installCliTools = lib.hm.dag.entryAfter [ "installPackages" ] ''
-	export CGO_ENABLED=0
-
-    run ${pkgs.go}/bin/go install github.com/kunchenguid/no-mistakes/cmd/no-mistakes@latest
-
-    run ${pkgs.bun}/bin/bun install -g \
-      gh-axi \
-      chrome-devtools-axi \
-      lavish-axi \
-      tasks-axi \
-      quota-axi
-  '';
 
   # ---------------------------------------------------------------------------
   # Program configs
@@ -200,8 +191,6 @@
     };
 
     initContent = ''
-	  export PATH="$HOME/go/bin:$HOME/.bun/bin:$PATH"
-
       # Autosuggestions strategy
       ZSH_AUTOSUGGEST_STRATEGY=(history completion)
       ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'

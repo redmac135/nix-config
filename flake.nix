@@ -13,41 +13,43 @@
     treehouse.inputs.nixpkgs.follows = "nixpkgs";
   };
 
-  outputs =
-    {
-      self,
-      nixpkgs,
-      nixos-wsl,
-      home-manager,
-      llm-agents,
-      treehouse,
-      ...
-    }:
-    {
-      nixosConfigurations = {
-        nixos = nixpkgs.lib.nixosSystem {
-          system = "aarch64-linux";
-          modules = [
-            nixos-wsl.nixosModules.default
-            ./configuration.nix
+  outputs = {
+    self,
+    nixpkgs,
+    nixos-wsl,
+    home-manager,
+    llm-agents,
+    treehouse,
+    ...
+  }: {
+    nixosConfigurations = {
+      nixos = nixpkgs.lib.nixosSystem {
+        system = "aarch64-linux";
+        modules = [
+          nixos-wsl.nixosModules.default
+          ./configuration.nix
 
-            home-manager.nixosModules.home-manager
-            {
-              home-manager.useGlobalPkgs = true;
-              home-manager.useUserPackages = true;
-              home-manager.users.ezhao = import ./home.nix;
-            }
+          home-manager.nixosModules.home-manager
+          {
+            home-manager.useGlobalPkgs = true;
+            home-manager.useUserPackages = true;
+            home-manager.users.ezhao = import ./home.nix;
+          }
 
-            {
-              nixpkgs.overlays = [
-                (final: prev: {
-                  llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
-                  treehouse = treehouse.packages.${prev.stdenv.hostPlatform.system};
-                })
-              ];
-            }
-          ];
-        };
+          {
+            nixpkgs.overlays = [
+              (final: prev: {
+                llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
+                treehouse = treehouse.packages.${prev.stdenv.hostPlatform.system};
+                firstmate = import ./packages/firstmate.nix {
+                  pkgs = final;
+                  inherit (final) lib;
+                };
+              })
+            ];
+          }
+        ];
       };
     };
+  };
 }
