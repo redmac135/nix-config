@@ -12,6 +12,7 @@
     git
     fd
     ripgrep # required for neovim search / telescope
+    chromium
     lazygit
     lazydocker
     cloudflared
