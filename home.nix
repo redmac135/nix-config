@@ -63,6 +63,7 @@
     firstmate.lavish-axi
     firstmate.tasks-axi
     firstmate.quota-axi
+    firstmate.pi-web
   ];
 
   # ---------------------------------------------------------------------------
