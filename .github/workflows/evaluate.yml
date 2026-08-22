@@ -1,8 +1,10 @@
 name: Evaluate NixOS configurations
 
 on:
-  push:
   pull_request:
+  push:
+    branches:
+      - dev
 
 jobs:
   evaluate:
