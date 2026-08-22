@@ -21,10 +21,10 @@
     llm-agents,
     treehouse,
     ...
-  }: {
-    nixosConfigurations = {
-      nixos = nixpkgs.lib.nixosSystem {
-        system = "aarch64-linux";
+  }: let
+    mkNixos = system:
+      nixpkgs.lib.nixosSystem {
+        inherit system;
         modules = [
           nixos-wsl.nixosModules.default
           ./configuration.nix
@@ -38,18 +38,23 @@
 
           {
             nixpkgs.overlays = [
-              (final: prev: {
-                llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
-                treehouse = treehouse.packages.${prev.stdenv.hostPlatform.system};
-                firstmate = import ./packages/firstmate.nix {
+              (final: prev:
+                {
+                  llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
+                  treehouse = treehouse.packages.${prev.stdenv.hostPlatform.system};
+                }
+                // import ./packages/external-tools.nix {
                   pkgs = final;
                   inherit (final) lib;
-                };
-              })
+                })
             ];
           }
         ];
       };
+  in {
+    nixosConfigurations = {
+      surface = mkNixos "aarch64-linux";
+      desktop = mkNixos "x86_64-linux";
     };
   };
 }

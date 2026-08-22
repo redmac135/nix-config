@@ -1,0 +1,20 @@
+name: Evaluate NixOS configurations
+
+on:
+  pull_request:
+  push:
+    branches:
+      - dev
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        configuration: [surface, desktop]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: Evaluate ${{ matrix.configuration }} system closure
+        run: nix eval ".#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel.drvPath"
