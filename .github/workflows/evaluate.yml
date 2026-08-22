@@ -19,10 +19,19 @@ jobs:
       - name: Evaluate ${{ matrix.configuration }} system closure
         run: nix eval ".#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel.drvPath"
 
-  build-desktop:
-    runs-on: ubuntu-latest
+  build:
+    name: build-${{ matrix.configuration }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - configuration: desktop
+            runner: ubuntu-latest
+          - configuration: surface
+            runner: ubuntu-24.04-arm
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
-      - name: Build desktop system closure
-        run: nix build -L --no-link '.#nixosConfigurations.desktop.config.system.build.toplevel'
+      - name: Build ${{ matrix.configuration }} system closure
+        run: nix build -L --no-link '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
