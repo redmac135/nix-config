@@ -1,4 +1,4 @@
-name: Evaluate NixOS configurations
+name: Validate NixOS configurations
 
 on:
   pull_request:
@@ -18,3 +18,11 @@ jobs:
       - uses: cachix/install-nix-action@v31
       - name: Evaluate ${{ matrix.configuration }} system closure
         run: nix eval ".#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel.drvPath"
+
+  build-desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: cachix/install-nix-action@v31
+      - name: Build desktop system closure
+        run: nix build -L --no-link '.#nixosConfigurations.desktop.config.system.build.toplevel'
