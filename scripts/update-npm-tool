@@ -1,0 +1,244 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/update-npm-tool [--dry-run|--apply] NAME VERSION
+
+Generate and build a candidate update for exactly one packaged npm tool. The
+default is a preview; --apply updates only its Nix stanza and vendored lockfile
+after successful generation and validation.
+
+Names: gh-axi, chrome-devtools-axi, lavish-axi, tasks-axi, quota-axi, pi-web
+EOF
+}
+
+die() {
+  printf 'error: %s\n' "$*" >&2
+  exit 1
+}
+
+apply=false
+case "${1:-}" in
+  --apply)
+    apply=true
+    shift
+    ;;
+  --dry-run)
+    shift
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+esac
+[[ $# -eq 2 ]] || {
+  usage >&2
+  exit 2
+}
+tool=$1
+version=$2
+[[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+([+-][0-9A-Za-z.-]+)?$ ]] ||
+  die "VERSION must be one exact npm version without a range or leading v"
+
+case "$tool" in
+  gh-axi | chrome-devtools-axi | lavish-axi | tasks-axi | quota-axi)
+    npm_name=$tool
+    lock_rel="packages/firstmate/lockfiles/$tool.package-lock.json"
+    attr_set=firstmate
+    fetcher_version=1
+    ;;
+  pi-web)
+    npm_name=@jmfederico/pi-web
+    lock_rel=packages/pi-web/lockfiles/pi-web.package-lock.json
+    attr_set=root
+    fetcher_version=2
+    ;;
+  *) die "unknown npm tool '$tool'; choose one name shown by --help" ;;
+esac
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || die "run this command in a Git worktree"
+cd "$root"
+external=packages/external-tools.nix
+[[ -f $external && -f $lock_rel ]] || die "package stanza or vendored lockfile is missing"
+[[ -z $(git status --porcelain=v1 --untracked-files=no) ]] ||
+  die "tracked working copy is dirty; commit or discard those changes first"
+
+mapfile -t current_fields < <(
+  awk -v tool="$tool" '
+    {
+      stripped = $0
+      sub(/^[[:space:]]*/, "", stripped)
+      if (stripped == tool " = mkNpmTool {") in_tool = 1
+      if (in_tool && stripped ~ /^(version|tarballHash|npmDepsHash) = "/) {
+        value = stripped
+        sub(/^[^=]+=[[:space:]]*"/, "", value)
+        sub(/";.*/, "", value)
+        print value
+      }
+      if (in_tool && stripped ~ /^npmDepsHash = "/) exit
+    }
+  ' "$external"
+)
+[[ ${#current_fields[@]} -eq 3 ]] || die "could not read current $tool metadata"
+current_version=${current_fields[0]}
+current_tarball_hash=${current_fields[1]}
+current_npm_deps_hash=${current_fields[2]}
+if [[ $current_version == "$version" ]]; then
+  printf 'No change: %s is already at npm version %s; tracked files are unchanged.\n' "$tool" "$version"
+  exit 0
+fi
+
+tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/update-npm-tool.XXXXXX")
+trap 'rm -rf "$tmpdir"' EXIT
+mkdir -p "$tmpdir/download" "$tmpdir/source"
+
+printf 'Resolving immutable npm package %s@%s...\n' "$npm_name" "$version"
+metadata=$(npm view --json "$npm_name@$version" name version dist.tarball dist.integrity)
+[[ $(jq -r '.name' <<<"$metadata") == "$npm_name" ]] || die "registry returned a different package name"
+[[ $(jq -r '.version' <<<"$metadata") == "$version" ]] || die "registry returned a different package version"
+registry_url=$(jq -r '."dist.tarball"' <<<"$metadata")
+registry_integrity=$(jq -r '."dist.integrity"' <<<"$metadata")
+expected_suffix="/${tool}-${version}.tgz"
+[[ $registry_url == https://registry.npmjs.org/* && $registry_url == *"$expected_suffix" ]] ||
+  die "registry returned an unexpected tarball URL: $registry_url"
+[[ $registry_integrity == sha512-* ]] || die "registry did not provide sha512 tarball integrity"
+
+pack_json=$(npm pack "$npm_name@$version" --pack-destination "$tmpdir/download" --json)
+tarball_name=$(jq -r 'if type == "array" then .[0].filename else empty end' <<<"$pack_json")
+pack_integrity=$(jq -r 'if type == "array" then .[0].integrity else empty end' <<<"$pack_json")
+[[ -n $tarball_name && -f $tmpdir/download/$tarball_name ]] || die "npm pack did not produce a tarball"
+[[ $pack_integrity == "$registry_integrity" ]] || die "downloaded tarball integrity does not match registry metadata"
+tarball=$tmpdir/download/$tarball_name
+
+tar -xzf "$tarball" -C "$tmpdir/source"
+source_dir=$tmpdir/source/package
+[[ -f $source_dir/package.json ]] || die "published tarball has no package/package.json"
+[[ $(jq -r '.name' "$source_dir/package.json") == "$npm_name" ]] || die "tarball package name does not match"
+[[ $(jq -r '.version' "$source_dir/package.json") == "$version" ]] || die "tarball package version does not match"
+tarball_hash=$(nix hash file --type sha256 "$tarball")
+
+printf 'Regenerating vendored lockfile with lifecycle scripts disabled...\n'
+(
+  cd "$source_dir"
+  rm -f package-lock.json
+  npm install --package-lock-only --ignore-scripts
+)
+candidate_lock=$source_dir/package-lock.json
+[[ -s $candidate_lock ]] || die "npm did not generate package-lock.json"
+[[ $(jq -r '.name' "$candidate_lock") == "$npm_name" ]] || die "generated lockfile has a different package name"
+[[ $(jq -r '.version' "$candidate_lock") == "$version" ]] || die "generated lockfile has a different package version"
+
+if [[ $tool == pi-web ]]; then
+  # pi-coding-agent's published shrinkwrap omits integrity on nested
+  # @earendil-works packages. Fetch their immutable registry SRI values before
+  # using fetcher v2, which also caches the required packuments.
+  repaired=0
+  while IFS=$'\t' read -r package_path nested_name nested_version; do
+    [[ -n $package_path ]] || continue
+    integrity=$(npm view --json "$nested_name@$nested_version" dist.integrity | jq -r '.')
+    [[ $integrity == sha512-* ]] || die "missing registry integrity for $nested_name@$nested_version"
+    patched=$tmpdir/package-lock.patched.json
+    jq --arg path "$package_path" --arg integrity "$integrity" \
+      '.packages[$path].integrity = $integrity' "$candidate_lock" >"$patched"
+    mv "$patched" "$candidate_lock"
+    repaired=$((repaired + 1))
+  done < <(
+    jq -r '
+      .packages | to_entries[] |
+      select(.key | startswith("node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/")) |
+      select(.value.integrity == null) |
+      [.key, (.key | split("/node_modules/")[-1]), .value.version] | @tsv
+    ' "$candidate_lock"
+  )
+  missing=$(jq '[.packages | to_entries[] | select(.key | startswith("node_modules/@earendil-works/pi-coding-agent/node_modules/@earendil-works/")) | select(.value.integrity == null)] | length' "$candidate_lock")
+  [[ $missing -eq 0 ]] || die "pi-web lockfile still has nested dependencies without integrity"
+  printf 'pi-web: repaired %d nested integrity value(s); using npm dependency fetcher v2.\n' "$repaired"
+fi
+
+printf 'Prefetching npm dependency cache (fetcher v%s)...\n' "$fetcher_version"
+npm_deps_hash=$(
+  NPM_FETCHER_VERSION=$fetcher_version \
+    nix run --inputs-from "$root" nixpkgs#prefetch-npm-deps -- "$candidate_lock" |
+    tail -n 1
+)
+[[ $npm_deps_hash == sha256-* ]] || die "prefetch-npm-deps did not return an SRI hash"
+
+candidate_external=$tmpdir/external-tools.nix
+awk -v tool="$tool" -v version="$version" -v tarball="$tarball_hash" -v deps="$npm_deps_hash" '
+  {
+    stripped = $0
+    sub(/^[[:space:]]*/, "", stripped)
+    if (stripped == tool " = mkNpmTool {") in_tool = 1
+    if (in_tool && stripped ~ /^version = "/) {
+      match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+      print indent "version = \"" version "\";"; versions++; next
+    }
+    if (in_tool && stripped ~ /^tarballHash = "/) {
+      match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+      print indent "tarballHash = \"" tarball "\";"; tarballs++; next
+    }
+    if (in_tool && stripped ~ /^npmDepsHash = "/) {
+      match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+      print indent "npmDepsHash = \"" deps "\";"; dependencies++; in_tool = 0; next
+    }
+    print
+  }
+  END {
+    if (versions != 1 || tarballs != 1 || dependencies != 1) exit 42
+  }
+' "$external" >"$candidate_external" || die "could not update exactly one $tool package stanza"
+
+candidate_root=$tmpdir/repo
+mkdir -p "$candidate_root"
+git archive HEAD | tar -x -C "$candidate_root"
+cp "$candidate_external" "$candidate_root/$external"
+cp "$candidate_lock" "$candidate_root/$lock_rel"
+
+printf '\n%s: %s -> %s\n' "$tool" "$current_version" "$version"
+printf '  registry:    %s\n' "$registry_url"
+printf '  integrity:   %s\n' "$registry_integrity"
+printf '  tarballHash: %s -> %s\n' "$current_tarball_hash" "$tarball_hash"
+printf '  npmDepsHash: %s -> %s (fetcher v%s)\n' "$current_npm_deps_hash" "$npm_deps_hash" "$fetcher_version"
+printf '\nFocused metadata diff:\n'
+diff -u --label "a/$external" --label "b/$external" "$external" "$candidate_external" || true
+printf '\nVendored lockfile diff stat:\n'
+git diff --no-index --stat -- "$lock_rel" "$candidate_lock" || true
+
+flake_ref="path:$candidate_root"
+read -r -d '' build_expr <<EOF || true
+let
+  flake = builtins.getFlake "$flake_ref";
+  system = builtins.currentSystem;
+  pkgs = import flake.inputs.nixpkgs {
+    inherit system;
+    overlays = [
+      (final: prev: import $candidate_root/packages/external-tools.nix {
+        pkgs = final;
+        inherit (final) lib;
+      })
+    ];
+  };
+in
+  if "$attr_set" == "firstmate"
+  then builtins.getAttr "$tool" pkgs.firstmate
+  else pkgs.pi-web
+EOF
+printf '\nBuilding affected package %s...\n' "$tool"
+nix build -L --no-link --impure --expr "$build_expr"
+printf 'Validated: %s built successfully on %s.\n' "$tool" "$(uname -m)"
+
+if [[ $apply == true ]]; then
+  [[ -z $(git status --porcelain=v1 --untracked-files=no) ]] ||
+    die "tracked files changed during validation; refusing to apply"
+  patch=$tmpdir/apply.patch
+  {
+    diff -u --label "a/$external" --label "b/$external" "$external" "$candidate_external" || true
+    diff -u --label "a/$lock_rel" --label "b/$lock_rel" "$lock_rel" "$candidate_lock" || true
+  } >"$patch"
+  git apply --check "$patch"
+  git apply "$patch"
+  printf 'Applied as one checked patch: %s and %s\n' "$external" "$lock_rel"
+else
+  printf 'Preview only: tracked files are unchanged. Re-run with --apply to regenerate, validate, and apply.\n'
+fi
