@@ -53,7 +53,7 @@
     # https://github.com/numtide/llm-agents.nix
     llmAgents.opencode
     llmAgents.herdr
-    llmAgents.pi
+    (llmAgents.pi.override {useBun = false;})
 
     # kunchenguid
     treehouse.default

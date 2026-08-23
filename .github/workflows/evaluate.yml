@@ -25,3 +25,27 @@ jobs:
         run: >-
           nix build -L --no-link
           '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
+      - name: Assert selected Pi Node runtime
+        shell: bash
+        run: |
+          info=$(nix eval --json '.#nixosConfigurations.${{ matrix.configuration }}' --apply '
+            host:
+            let
+              pi = builtins.head (
+                builtins.filter
+                  (package: (package.pname or "") == "pi")
+                  host.config.home-manager.users.ezhao.home.packages
+              );
+            in
+            {
+              inherit (pi) drvPath version;
+              nodeOut = host.pkgs.nodejs.outPath;
+            }
+          ')
+          pi_drv=$(jq --raw-output '.drvPath' <<<"$info")
+          pi_version=$(jq --raw-output '.version' <<<"$info")
+          node_out=$(jq --raw-output '.nodeOut' <<<"$info")
+          pi_out=$(nix-store --query --outputs "$pi_drv")
+
+          test "$(cd / && env -i "$pi_out/bin/pi" --version)" = "$pi_version"
+          nix-store --query --references "$pi_out" | grep --fixed-strings --line-regexp "$node_out"
