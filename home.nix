@@ -63,7 +63,7 @@
     llmAgents.codex
     llmAgents.opencode
     llmAgents.herdr
-    llmAgents.pi
+	(llmAgents.pi.override {useBun = false;})
 
     # kunchenguid
     treehouse.default
