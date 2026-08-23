@@ -79,9 +79,9 @@ in {
 
     lavish-axi = mkNpmTool {
       pname = "lavish-axi";
-      version = "0.1.45";
-      tarballHash = "sha256-fD/nXuEyZMjHzYQDtI2Xle4Zl+0DN8i+GsXAnWPR7xQ=";
-      npmDepsHash = "sha256-8MHo9+GqLBJuYEz3nBd6e00nL3oqK75SjY/XxQ+qFDg=";
+      version = "0.1.57";
+      tarballHash = "sha256-Et4vDIWJ0YMbgOqGmJgFUPByOCueg2oOGL9UmUTCzV8=";
+      npmDepsHash = "sha256-F2Y936Ka15e1BwLmd4md7Kfl0zEDwYD6ovcCG0cgui8=";
       lockfile = ./firstmate/lockfiles/lavish-axi.package-lock.json;
       description = "Agent interface for the Lavish editor";
     };
