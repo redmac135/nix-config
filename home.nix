@@ -17,6 +17,7 @@
     lazydocker
     cloudflared
     gcc
+    gnumake
 
     # Language Runtimes
     nodejs_22
@@ -63,7 +64,6 @@
     firstmate.lavish-axi
     firstmate.tasks-axi
     firstmate.quota-axi
-    pi-web
   ];
 
   # ---------------------------------------------------------------------------
