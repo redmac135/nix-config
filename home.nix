@@ -8,7 +8,11 @@
   home.stateVersion = "26.05";
   home.sessionVariables = {
     BROWSER = "explorer.exe";
+    NPM_CONFIG_PREFIX = "$HOME/.local";
   };
+  home.sessionPath = [
+    "$HOME/.local/bin"
+  ];
 
   home.packages = with pkgs; [
     # Core
