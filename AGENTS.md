@@ -4,16 +4,16 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 - Add durable project-specific notes here as they are discovered through real work.
 
-## Updating flake inputs
+## Safe targeted updates
 
-Update one input per PR with `nix flake update <input>`, review `flake.lock`, and build the native no-link closure before pushing; `.github/workflows/evaluate.yml` gates both native host closures. An `llm-agents` update can change Pi, Herdr, and OpenCode together, so inspect all three selected versions.
+Use the transactional entry points documented in `README.md`: `scripts/update-flake-input`, `scripts/update-npm-tool`, and `scripts/update-no-mistakes`. Preview first, apply only after native validation, and keep one component per PR; `.github/workflows/evaluate.yml` gates both native host closures. An `llm-agents` update can change Pi, Herdr, and OpenCode together, so inspect all three selected versions.
 
 ## Packaging firstmate CLIs
 
 `packages/external-tools.nix` builds the kunchenguid firstmate tools (`no-mistakes` + the five `*-axi` npm CLIs) as Nix derivations, exposed as the `pkgs.firstmate` overlay.
 
 - `no-mistakes` is `pkgs.buildGoModule` from the pinned GitHub tag; `subPackages = ["cmd/no-mistakes"]` is required (root package is test-only).
-- Each `*-axi` is `pkgs.buildNpmPackage` from the immutable npm registry tarball (prebuilt `dist/`; `dontNpmBuild = true`). To bump one, regenerate its lockfile with `npm install --package-lock-only --ignore-scripts` on the extracted tarball, replace `packages/firstmate/lockfiles/<pkg>.package-lock.json`, and update `version`, `tarballHash`, `npmDepsHash` (obtainable from the FOD hash-mismatch error, or `nix run nixpkgs#prefetch-npm-deps`).
+- Each `*-axi` is `pkgs.buildNpmPackage` from the immutable npm registry tarball (prebuilt `dist/`; `dontNpmBuild = true`). Update it through `scripts/update-npm-tool`, which regenerates the matching lockfile and hashes transactionally.
 
 ## Packaging pi-web
 

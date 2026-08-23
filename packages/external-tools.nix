@@ -40,19 +40,19 @@ in {
   firstmate = {
     no-mistakes = pkgs.buildGoModule {
       pname = "no-mistakes";
-      version = "1.45.4";
+      version = "1.53.0";
       src = pkgs.fetchFromGitHub {
         owner = "kunchenguid";
         repo = "no-mistakes";
-        rev = "v1.45.4";
-        hash = "sha256-pfR60vack5oLItPfu4zDYYk76S8qhDOJP/uiudo7kVI=";
+        rev = "f627beb7ffa8aceee353fb1deb88f40ae8611ad6";
+        hash = "sha256-6+SrbK4Vz95RTpH3BH+ASPPXuMEIHAX80nqrYaKwlzQ=";
       };
       vendorHash = "sha256-NZOYxNYvt4192uqKBdKRxdgrKFvWx3585psdCnRdPSM=";
       subPackages = ["cmd/no-mistakes"];
       ldflags = [
-        "-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Version=v1.45.4"
-        "-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Commit=0c58eb71"
-        "-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Date=2026-08-04"
+        "-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Version=v1.53.0"
+        "-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Commit=f627beb7"
+        "-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Date=2026-08-16"
         "-X github.com/kunchenguid/no-mistakes/internal/buildinfo.TelemetryHost=https://a.kunchenguid.com"
         "-X github.com/kunchenguid/no-mistakes/internal/buildinfo.TelemetryWebsiteID=f959e889-92f5-4121-8a1f-571b10861198"
       ];

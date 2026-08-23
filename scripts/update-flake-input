@@ -1,0 +1,173 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/update-flake-input [--dry-run|--apply] INPUT
+
+Preview one top-level flake input update (the default), or atomically apply the
+candidate after its native NixOS closure builds successfully.
+EOF
+}
+
+die() {
+  printf 'error: %s\n' "$*" >&2
+  exit 1
+}
+
+apply=false
+case "${1:-}" in
+  --apply)
+    apply=true
+    shift
+    ;;
+  --dry-run)
+    shift
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+esac
+[[ $# -eq 1 ]] || {
+  usage >&2
+  exit 2
+}
+input=$1
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || die "run this command in a Git worktree"
+cd "$root"
+[[ -f flake.lock ]] || die "flake.lock is missing"
+[[ -z $(git status --porcelain=v1 --untracked-files=no) ]] ||
+  die "tracked working copy is dirty; commit or discard those changes first"
+
+mapfile -t top_inputs < <(jq -r '.nodes.root.inputs | keys[]' flake.lock)
+printf '%s\n' "${top_inputs[@]}" | grep -Fxq -- "$input" ||
+  die "'$input' is not one explicit top-level input (choose: ${top_inputs[*]})"
+
+case "$(uname -m)" in
+  aarch64 | arm64) native_host=surface ;;
+  x86_64 | amd64) native_host=desktop ;;
+  *) die "unsupported native architecture $(uname -m); choose a native surface or desktop host" ;;
+esac
+
+tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/update-flake-input.XXXXXX")
+trap 'rm -rf "$tmpdir"' EXIT
+candidate=$tmpdir/flake.lock
+
+printf 'Generating candidate for top-level input %s...\n' "$input"
+nix flake update "$input" \
+  --reference-lock-file "$root/flake.lock" \
+  --output-lock-file "$candidate"
+[[ -s $candidate ]] || die "Nix did not produce a candidate lock"
+
+node_ref() {
+  jq -r --arg input "$2" '.nodes.root.inputs[$input] | if type == "array" then .[0] else . end' "$1"
+}
+
+closure() {
+  local lock=$1 start=$2 node next
+  local -a queue=("$start")
+  declare -A seen=()
+  while ((${#queue[@]})); do
+    node=${queue[0]}
+    queue=("${queue[@]:1}")
+    [[ -n $node && $node != null ]] || continue
+    [[ -z ${seen[$node]+x} ]] || continue
+    seen[$node]=1
+    while IFS= read -r next; do
+      [[ -n $next ]] && queue+=("$next")
+    done < <(
+      jq -r --arg node "$node" '
+        .nodes[$node].inputs // {} | .[] |
+        if type == "array" then .[0] else . end
+      ' "$lock"
+    )
+  done
+  printf '%s\n' "${!seen[@]}"
+}
+
+old_root=$(node_ref flake.lock "$input")
+new_root=$(node_ref "$candidate" "$input")
+mapfile -t allowed_nodes < <(
+  {
+    closure flake.lock "$old_root"
+    closure "$candidate" "$new_root"
+  } | sort -u
+)
+declare -A allowed=()
+for node in "${allowed_nodes[@]}"; do allowed[$node]=1; done
+
+# A targeted update may change the requested node and its dependency closure,
+# but must not alter the identity or contents of another top-level input.
+for other in "${top_inputs[@]}"; do
+  [[ $other == "$input" ]] && continue
+  old_other=$(node_ref flake.lock "$other")
+  new_other=$(node_ref "$candidate" "$other")
+  [[ $old_other == "$new_other" ]] ||
+    die "candidate also remaps unrelated top-level input '$other'"
+  if ! jq -e --arg node "$old_other" --slurpfile new "$candidate" \
+    '.nodes[$node] == $new[0].nodes[$node]' flake.lock >/dev/null; then
+    die "candidate also changes unrelated top-level input '$other'"
+  fi
+done
+
+mapfile -t changed_nodes < <(
+  jq -nr --slurpfile old flake.lock --slurpfile new "$candidate" '
+    (($old[0].nodes | keys) + ($new[0].nodes | keys) | unique[]) as $node |
+    select($old[0].nodes[$node] != $new[0].nodes[$node]) | $node
+  '
+)
+
+if ((${#changed_nodes[@]} == 0)); then
+  printf 'No change: %s is already at the selected lock revision.\n' "$input"
+  exit 0
+fi
+
+for node in "${changed_nodes[@]}"; do
+  [[ $node == root || -n ${allowed[$node]+x} ]] ||
+    die "candidate changes unrelated lock node '$node'"
+done
+
+# The root node itself may only differ in the selected input mapping.
+if ! jq -e --arg input "$input" --slurpfile new "$candidate" '
+  (.nodes.root.inputs | del(.[$input])) ==
+  ($new[0].nodes.root.inputs | del(.[$input]))
+' flake.lock >/dev/null; then
+  die "candidate changes unrelated root input mappings"
+fi
+
+revision() {
+  jq -r --arg node "$2" '
+    .nodes[$node].locked.rev // .nodes[$node].locked.ref // "(none)"
+  ' "$1"
+}
+
+printf '\nRequested input: %s\n' "$input"
+printf '  old: %s\n' "$(revision flake.lock "$old_root")"
+printf '  new: %s\n' "$(revision "$candidate" "$new_root")"
+printf 'Changed dependency closure (%d node(s)):\n' "${#changed_nodes[@]}"
+for node in "${changed_nodes[@]}"; do
+  [[ $node == root ]] && continue
+  printf '  %-24s %s -> %s\n' "$node" \
+    "$(revision flake.lock "$node")" "$(revision "$candidate" "$node")"
+done
+printf '\nFocused lock diff:\n'
+diff -u --label a/flake.lock --label b/flake.lock flake.lock "$candidate" || true
+
+printf '\nBuilding native %s closure against the candidate lock...\n' "$native_host"
+nix build -L --no-link \
+  --reference-lock-file "$candidate" \
+  ".#nixosConfigurations.$native_host.config.system.build.toplevel"
+printf 'Validated: native %s closure built successfully.\n' "$native_host"
+
+if [[ $apply == true ]]; then
+  [[ -z $(git status --porcelain=v1 --untracked-files=no) ]] ||
+    die "tracked files changed during validation; refusing to apply"
+  apply_tmp=$(mktemp "$root/.flake.lock.apply.XXXXXX")
+  cp "$candidate" "$apply_tmp"
+  mv -f "$apply_tmp" "$root/flake.lock"
+  printf 'Applied atomically: flake.lock\n'
+else
+  printf 'Preview only: tracked files are unchanged. Re-run with --apply to regenerate, validate, and apply.\n'
+fi

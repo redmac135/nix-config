@@ -1,0 +1,246 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage: scripts/update-no-mistakes [--dry-run|--apply] VERSION
+
+Generate and build a candidate for one exact stable no-mistakes Go release. The
+default is a preview; --apply atomically updates its source, vendor hash, and
+release ldflags after the binary reports the expected version.
+EOF
+}
+
+die() {
+  printf 'error: %s\n' "$*" >&2
+  exit 1
+}
+
+apply=false
+case "${1:-}" in
+  --apply)
+    apply=true
+    shift
+    ;;
+  --dry-run)
+    shift
+    ;;
+  -h | --help)
+    usage
+    exit 0
+    ;;
+esac
+[[ $# -eq 1 ]] || {
+  usage >&2
+  exit 2
+}
+version=$1
+[[ $version =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] ||
+  die "VERSION must be one exact stable version without a leading v or prerelease suffix"
+tag=v$version
+
+root=$(git rev-parse --show-toplevel 2>/dev/null) || die "run this command in a Git worktree"
+cd "$root"
+external=packages/external-tools.nix
+[[ -f $external ]] || die "$external is missing"
+[[ -z $(git status --porcelain=v1 --untracked-files=no) ]] ||
+  die "tracked working copy is dirty; commit or discard those changes first"
+
+mapfile -t current_fields < <(
+  awk '
+    {
+      stripped = $0
+      sub(/^[[:space:]]*/, "", stripped)
+      if (stripped == "no-mistakes = pkgs.buildGoModule {") in_tool = 1
+      if (in_tool && stripped == "src = pkgs.fetchFromGitHub {") in_src = 1
+      if (in_tool && stripped ~ /^version = "/) field(stripped)
+      if (in_tool && in_src && stripped ~ /^rev = "/) field(stripped)
+      if (in_tool && in_src && stripped ~ /^hash = "/) {
+        field(stripped)
+        in_src = 0
+      }
+      if (in_tool && stripped ~ /^vendorHash = "/) {
+        field(stripped)
+        exit
+      }
+    }
+    function field(value) {
+      sub(/^[^=]+=[[:space:]]*"/, "", value)
+      sub(/";.*/, "", value)
+      print value
+    }
+  ' "$external"
+)
+[[ ${#current_fields[@]} -eq 4 ]] || die "could not read current no-mistakes metadata"
+current_version=${current_fields[0]}
+current_revision=${current_fields[1]}
+current_src_hash=${current_fields[2]}
+current_vendor_hash=${current_fields[3]}
+if [[ $current_version == "$version" ]]; then
+  printf 'No change: no-mistakes is already at stable version %s; tracked files are unchanged.\n' "$version"
+  exit 0
+fi
+
+printf 'Resolving exact stable release %s...\n' "$tag"
+release_info=$(gh-axi api "/repos/kunchenguid/no-mistakes/releases/tags/$tag")
+grep -Fxq "tag_name: $tag" <<<"$release_info" || die "GitHub release tag does not match $tag"
+grep -Fxq 'draft: false' <<<"$release_info" || die "$tag is a draft, not a stable release"
+grep -Fxq 'prerelease: false' <<<"$release_info" || die "$tag is a prerelease, not a stable release"
+
+remote=https://github.com/kunchenguid/no-mistakes.git
+refs=$(git ls-remote "$remote" "refs/tags/$tag" "refs/tags/$tag^{}")
+commit=$(awk -v deref="refs/tags/$tag^{}" '$2 == deref { print $1; found = 1 } END { if (!found) exit 1 }' <<<"$refs" 2>/dev/null || true)
+if [[ -z $commit ]]; then
+  commit=$(awk -v exact="refs/tags/$tag" '$2 == exact { print $1 }' <<<"$refs")
+fi
+[[ $commit =~ ^[0-9a-f]{40}$ ]] || die "could not resolve $tag to one immutable commit"
+short_commit=${commit:0:8}
+
+commit_info=$(gh-axi api "/repos/kunchenguid/no-mistakes/commits/$commit")
+resolved_sha=$(awk '$1 == "sha:" { print $2; exit }' <<<"$commit_info")
+[[ $resolved_sha == "$commit" ]] || die "GitHub commit evidence does not agree with tag resolution"
+date=$(
+  awk '
+    /^  committer:/ { in_committer = 1; next }
+    in_committer && /^    date:/ {
+      value = $2
+      gsub(/"/, "", value)
+      print substr(value, 1, 10)
+      exit
+    }
+  ' <<<"$commit_info"
+)
+[[ $date =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]] || die "could not resolve immutable commit date"
+
+prefetch=$(nix flake prefetch "github:kunchenguid/no-mistakes/$commit" --json)
+src_hash=$(jq -r '.hash' <<<"$prefetch")
+[[ $src_hash == sha256-* ]] || die "Nix did not return a source hash"
+
+tmpdir=$(mktemp -d "${TMPDIR:-/tmp}/update-no-mistakes.XXXXXX")
+trap 'rm -rf "$tmpdir"' EXIT
+
+render_candidate() {
+  local vendor_hash=$1 output=$2
+  awk \
+    -v version="$version" \
+    -v commit="$commit" \
+    -v short_commit="$short_commit" \
+    -v date="$date" \
+    -v source_hash="$src_hash" \
+    -v vendor_hash="$vendor_hash" '
+    {
+      stripped = $0
+      sub(/^[[:space:]]*/, "", stripped)
+      if (stripped == "no-mistakes = pkgs.buildGoModule {") in_tool = 1
+      if (in_tool && stripped ~ /^version = "/) {
+        match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+        print indent "version = \"" version "\";"; versions++; next
+      }
+      if (in_tool && stripped == "src = pkgs.fetchFromGitHub {") in_src = 1
+      if (in_tool && in_src && stripped ~ /^rev = "/) {
+        match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+        print indent "rev = \"" commit "\";"; revisions++; next
+      }
+      if (in_tool && in_src && stripped ~ /^hash = "/) {
+        match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+        print indent "hash = \"" source_hash "\";"; source_hashes++; in_src = 0; next
+      }
+      if (in_tool && stripped ~ /^vendorHash = /) {
+        match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+        if (vendor_hash == "lib.fakeHash") print indent "vendorHash = lib.fakeHash;"
+        else print indent "vendorHash = \"" vendor_hash "\";"
+        vendors++; next
+      }
+      if (in_tool && stripped ~ /buildinfo.Version=/) {
+        match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+        print indent "\"-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Version=v" version "\""; ld_versions++; next
+      }
+      if (in_tool && stripped ~ /buildinfo.Commit=/) {
+        match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+        print indent "\"-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Commit=" short_commit "\""; ld_commits++; next
+      }
+      if (in_tool && stripped ~ /buildinfo.Date=/) {
+        match($0, /^[[:space:]]*/); indent = substr($0, RSTART, RLENGTH)
+        print indent "\"-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Date=" date "\""; ld_dates++; in_tool = 0; next
+      }
+      print
+    }
+    END {
+      if (versions != 1 || revisions != 1 || source_hashes != 1 || vendors != 1 ||
+          ld_versions != 1 || ld_commits != 1 || ld_dates != 1) exit 42
+    }
+  ' "$external" >"$output" || die "could not update exactly one no-mistakes stanza"
+}
+
+candidate_external=$tmpdir/external-tools.nix
+render_candidate lib.fakeHash "$candidate_external"
+candidate_root=$tmpdir/repo
+mkdir -p "$candidate_root"
+git archive HEAD | tar -x -C "$candidate_root"
+cp "$candidate_external" "$candidate_root/$external"
+
+build_expression() {
+  cat <<EOF
+let
+  flake = builtins.getFlake "path:$candidate_root";
+  system = builtins.currentSystem;
+  pkgs = import flake.inputs.nixpkgs {
+    inherit system;
+    overlays = [
+      (final: prev: import $candidate_root/packages/external-tools.nix {
+        pkgs = final;
+        inherit (final) lib;
+      })
+    ];
+  };
+in pkgs.firstmate.no-mistakes
+EOF
+}
+build_expr=$(build_expression)
+
+printf 'Computing Go vendor hash with Nix...\n'
+first_log=$tmpdir/vendor-build.log
+if nix build --no-link --impure --expr "$build_expr" >"$tmpdir/vendor-build.out" 2>"$first_log"; then
+  die "fake vendor hash unexpectedly built; refusing to infer a hash"
+fi
+grep -qi 'hash mismatch' "$first_log" || {
+  cat "$first_log" >&2
+  die "vendor hash build failed for a reason other than the expected hash mismatch"
+}
+vendor_hash=$(sed -n 's/.*got:[[:space:]]*\(sha256-[A-Za-z0-9+\/=]*\).*/\1/p' "$first_log" | tail -n 1)
+[[ $vendor_hash == sha256-* ]] || {
+  cat "$first_log" >&2
+  die "could not read the computed Go vendor hash"
+}
+
+render_candidate "$vendor_hash" "$candidate_external"
+cp "$candidate_external" "$candidate_root/$external"
+
+printf '\nno-mistakes: %s -> %s\n' "$current_version" "$version"
+printf '  tag:        %s (stable release)\n' "$tag"
+printf '  revision:   %s -> %s (%s)\n' "$current_revision" "$commit" "$short_commit"
+printf '  date:       %s\n' "$date"
+printf '  source hash: %s -> %s\n' "$current_src_hash" "$src_hash"
+printf '  vendor hash: %s -> %s\n' "$current_vendor_hash" "$vendor_hash"
+printf '\nFocused package diff:\n'
+diff -u --label "a/$external" --label "b/$external" "$external" "$candidate_external" || true
+
+printf '\nBuilding no-mistakes with the computed source and vendor hashes...\n'
+out_path=$(nix build -L --no-link --print-out-paths --impure --expr "$build_expr")
+[[ -x $out_path/bin/no-mistakes ]] || die "build output has no no-mistakes binary"
+version_output=$("$out_path/bin/no-mistakes" --version)
+expected="no-mistakes version $tag ($short_commit) $date"
+[[ $version_output == "$expected" ]] ||
+  die "version check failed: expected '$expected', got '$version_output'"
+printf 'Validated: %s\n' "$version_output"
+
+if [[ $apply == true ]]; then
+  [[ -z $(git status --porcelain=v1 --untracked-files=no) ]] ||
+    die "tracked files changed during validation; refusing to apply"
+  apply_tmp=$(mktemp "$root/packages/.external-tools.apply.XXXXXX")
+  cp "$candidate_external" "$apply_tmp"
+  mv -f "$apply_tmp" "$root/$external"
+  printf 'Applied atomically: %s\n' "$external"
+else
+  printf 'Preview only: tracked files are unchanged. Re-run with --apply to regenerate, validate, and apply.\n'
+fi
