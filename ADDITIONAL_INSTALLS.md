@@ -4,6 +4,8 @@ I hope this file doesn't grow too much. Here I add additional commands to run to
 
 ## pi-web
 
+https://github.com/ygncode/pi-web
+
 ```bash
-npm install -g @jmfederico/pi-web --allow-scripts=node-pty
+pi install npm:@ygncode/pi-web@beta
 ```
