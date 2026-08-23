@@ -97,9 +97,9 @@ in {
 
     quota-axi = mkNpmTool {
       pname = "quota-axi";
-      version = "0.1.17";
-      tarballHash = "sha256-gfH3C7n+OjX4eBoRZsfDyQnfwp8bXOr9tykVxmYkyzA=";
-      npmDepsHash = "sha256-+qc5TG/sWa3ybwZywi0+UhXd7E2VLWE3igfRnYfZbtg=";
+      version = "0.1.30";
+      tarballHash = "sha256-XgcbfERvQVBdoeQe4BmBkAqM4chm2ELYf6qW9ssYzsU=";
+      npmDepsHash = "sha256-NmDkzf0j20QPWc5i/ZZullNb38FmzZOQySXJDiDz+0E=";
       lockfile = ./firstmate/lockfiles/quota-axi.package-lock.json;
       description = "Agent interface for quota tracking";
     };
