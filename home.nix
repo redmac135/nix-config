@@ -6,6 +6,13 @@
   home.username = "ezhao";
   home.homeDirectory = "/home/ezhao";
   home.stateVersion = "26.05";
+  home.sessionVariables = {
+    BROWSER = "explorer.exe";
+    NPM_CONFIG_PREFIX = "$HOME/.local";
+  };
+  home.sessionPath = [
+    "$HOME/.local/bin"
+  ];
 
   home.packages = with pkgs; [
     # Core
@@ -17,6 +24,7 @@
     lazydocker
     cloudflared
     gcc
+    gnumake
 
     # Language Runtimes
     nodejs_22
@@ -63,7 +71,6 @@
     firstmate.lavish-axi
     firstmate.tasks-axi
     firstmate.quota-axi
-    pi-web
   ];
 
   # ---------------------------------------------------------------------------
@@ -82,6 +89,8 @@
       push.autoSetupRemote = true;
       pull.rebase = true;
       rebase.updateRefs = true;
+      credential."https://github.com".helper = "!gh auth git-credential";
+      credential."https://gist.github.com".helper = "!gh auth git-credential";
     };
   };
 

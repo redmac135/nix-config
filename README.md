@@ -50,8 +50,8 @@ versions.
 The custom npm tools in `packages/external-tools.nix` are pinned separately. To
 bump one, generate its vendored `package-lock.json` with
 `npm install --package-lock-only --ignore-scripts`, replace the matching lockfile
-under `packages/firstmate/lockfiles/` or `packages/pi-web/lockfiles/`, and update
-its `version`, `tarballHash`, and `npmDepsHash` in `packages/external-tools.nix`.
+under `packages/firstmate/lockfiles/`, and update its `version`, `tarballHash`,
+and `npmDepsHash` in `packages/external-tools.nix`.
 Update one tool per PR.
 
 `firstmate.no-mistakes` is a separate Go package. Update its exact release tag,

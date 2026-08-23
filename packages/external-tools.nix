@@ -9,15 +9,11 @@
     npmDepsHash,
     lockfile,
     description,
-    npmName ? pname,
-    homepage ? "https://github.com/kunchenguid/${pname}",
-    nodejs ? pkgs.nodejs,
-    npmDepsFetcherVersion ? 1,
   }:
     pkgs.buildNpmPackage {
-      inherit pname version nodejs npmDepsFetcherVersion;
+      inherit pname version;
       src = pkgs.fetchurl {
-        url = "https://registry.npmjs.org/${npmName}/-/${pname}-${version}.tgz";
+        url = "https://registry.npmjs.org/${pname}/-/${pname}-${version}.tgz";
         hash = tarballHash;
       };
       npmDepsHash = npmDepsHash;
@@ -32,7 +28,7 @@
       dontNpmBuild = true;
       meta = {
         description = description;
-        inherit homepage;
+        homepage = "https://github.com/kunchenguid/${pname}";
         license = lib.licenses.mit;
       };
     };
@@ -107,23 +103,5 @@ in {
       lockfile = ./firstmate/lockfiles/quota-axi.package-lock.json;
       description = "Agent interface for quota tracking";
     };
-  };
-
-  pi-web = mkNpmTool {
-    pname = "pi-web";
-    version = "1.202608.1";
-    npmName = "@jmfederico/pi-web";
-    tarballHash = "sha256-6kgJ3wOJ07M5cpWeiFy9Hw3KvOoJH6qIBGRXvkJiHYc=";
-    npmDepsHash = "sha256-7pqFDJE3cSKn4n6wWvHS+XlEaGSrAb2g+1ph5Vry55o=";
-    # pi-coding-agent ships an npm-shrinkwrap whose nested dev deps are resolved
-    # from packuments during `npm ci`, so the dependency cache must include
-    # packuments too (npmDepsFetcherVersion = 2), not just tarballs.
-    npmDepsFetcherVersion = 2;
-    lockfile = ./pi-web/lockfiles/pi-web.package-lock.json;
-    description = "Web UI for persistent Pi Coding Agent sessions in real workspaces";
-    homepage = "https://pi-web.dev/";
-    # node-pty ships no linux prebuilds, so npm rebuild compiles its native
-    # binding against the nodejs_22 headers (node-gyp; python/gcc from stdenv).
-    nodejs = pkgs.nodejs_22;
   };
 }

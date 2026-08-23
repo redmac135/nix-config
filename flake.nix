@@ -38,15 +38,17 @@
 
           {
             nixpkgs.overlays = [
-              (final: prev:
-                {
-                  llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
-                  treehouse = treehouse.packages.${prev.stdenv.hostPlatform.system};
-                }
-                // import ./packages/external-tools.nix {
-                  pkgs = final;
-                  inherit (final) lib;
-                })
+              (
+                final: prev:
+                  {
+                    llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
+                    treehouse = treehouse.packages.${prev.stdenv.hostPlatform.system};
+                  }
+                  // import ./packages/external-tools.nix {
+                    pkgs = final;
+                    inherit (final) lib;
+                  }
+              )
             ];
           }
         ];
