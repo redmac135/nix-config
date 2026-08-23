@@ -41,15 +41,7 @@
               (final: prev:
                 {
                   llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
-                  treehouse = let
-                    packages = treehouse.packages.${prev.stdenv.hostPlatform.system};
-                  in
-                    packages
-                    // {
-                      default = packages.default.overrideAttrs (old: {
-                        nativeCheckInputs = (old.nativeCheckInputs or []) ++ [final.python3];
-                      });
-                    };
+                  treehouse = treehouse.packages.${prev.stdenv.hostPlatform.system};
                 }
                 // import ./packages/external-tools.nix {
                   pkgs = final;

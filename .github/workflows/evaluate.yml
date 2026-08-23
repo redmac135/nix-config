@@ -1,4 +1,4 @@
-name: Validate NixOS configurations
+name: Build NixOS configurations
 
 on:
   pull_request:
@@ -7,21 +7,8 @@ on:
       - dev
 
 jobs:
-  evaluate:
-    runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        configuration: [surface, desktop]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: cachix/install-nix-action@v31
-      - name: Evaluate ${{ matrix.configuration }} system closure
-        run: nix eval ".#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel.drvPath"
-
   build:
     name: build-${{ matrix.configuration }}
-    runs-on: ${{ matrix.runner }}
     strategy:
       fail-fast: false
       matrix:
@@ -30,8 +17,11 @@ jobs:
             runner: ubuntu-latest
           - configuration: surface
             runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
       - name: Build ${{ matrix.configuration }} system closure
-        run: nix build -L --no-link '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
+        run: >-
+          nix build -L --no-link
+          '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'

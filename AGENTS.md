@@ -4,6 +4,10 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 - Add durable project-specific notes here as they are discovered through real work.
 
+## Updating flake inputs
+
+Update one input per PR with `nix flake update <input>`, review `flake.lock`, and build the native no-link closure before pushing; `.github/workflows/evaluate.yml` gates both native host closures. An `llm-agents` update can change Pi, Herdr, and OpenCode together, so inspect all three selected versions.
+
 ## Packaging firstmate CLIs
 
 `packages/external-tools.nix` builds the kunchenguid firstmate tools (`no-mistakes` + the five `*-axi` npm CLIs) as Nix derivations, exposed as the `pkgs.firstmate` overlay.

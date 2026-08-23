@@ -28,17 +28,35 @@ sudo nixos-rebuild switch --flake .#desktop
 
 ## Update packages
 
-Update ordinary Nix packages by refreshing the flake inputs:
+Update one flake input at a time and review the resulting lock change:
 
 ```bash
-nix flake update
+nix flake update <input>
+git diff -- flake.lock
 ```
+
+Build the configuration matching the native host before opening the update. CI
+then builds both native closures before merge:
+
+```bash
+nix build -L --no-link '.#nixosConfigurations.surface.config.system.build.toplevel'
+nix build -L --no-link '.#nixosConfigurations.desktop.config.system.build.toplevel'
+```
+
+Keep each flake input update in its own PR. In particular, an `llm-agents`
+update can change Pi, Herdr, and OpenCode together, so review all three selected
+versions.
 
 The custom npm tools in `packages/external-tools.nix` are pinned separately. To
 bump one, generate its vendored `package-lock.json` with
 `npm install --package-lock-only --ignore-scripts`, replace the matching lockfile
 under `packages/firstmate/lockfiles/` or `packages/pi-web/lockfiles/`, and update
 its `version`, `tarballHash`, and `npmDepsHash` in `packages/external-tools.nix`.
+Update one tool per PR.
+
+`firstmate.no-mistakes` is a separate Go package. Update its exact release tag,
+source hash, `vendorHash`, and release `ldflags` independently from npm and flake
+input updates.
 
 ## Clean Cache
 
