@@ -6,6 +6,9 @@
   home.username = "ezhao";
   home.homeDirectory = "/home/ezhao";
   home.stateVersion = "26.05";
+  home.sessionVariables = {
+    BROWSER = "explorer.exe";
+  };
 
   home.packages = with pkgs; [
     # Core
@@ -82,6 +85,8 @@
       push.autoSetupRemote = true;
       pull.rebase = true;
       rebase.updateRefs = true;
+      credential."https://github.com".helper = "!gh auth git-credential";
+      credential."https://gist.github.com".helper = "!gh auth git-credential";
     };
   };
 
