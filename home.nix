@@ -56,6 +56,7 @@
 
     # Utilities
     gh
+    jq
     taskwarrior3
 
     # https://github.com/numtide/llm-agents.nix
