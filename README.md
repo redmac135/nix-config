@@ -58,6 +58,37 @@ Update one tool per PR.
 source hash, `vendorHash`, and release `ldflags` independently from npm and flake
 input updates.
 
+## Pi MCP configuration boundary
+
+This flake installs Pi, but it does not own Pi's mutable package or MCP files.
+Pi packages remain in `~/.pi/agent/settings.json`, while the Pi MCP adapter's
+global server overrides remain in `~/.pi/agent/mcp.json`. OAuth credentials are
+stored separately by the adapter in the operating system credential store.
+Home Manager must not declare either JSON file without first migrating all of
+its existing entries, because doing so would replace manually managed packages
+or MCP servers.
+
+To add Supabase outside this repository, first install the MCP adapter with
+`pi install npm:pi-mcp-adapter` if needed, then merge this server into the
+existing `mcpServers` object in `~/.pi/agent/mcp.json` without replacing other
+servers:
+
+```json
+{
+  "mcpServers": {
+    "supabase": {
+      "url": "https://mcp.supabase.com/mcp",
+      "auth": "oauth"
+    }
+  }
+}
+```
+
+Restart Pi and run `/mcp-auth supabase`. This uses Supabase's current official
+remote endpoint and browser OAuth flow, so no access token, project reference,
+or other secret is committed to this repository. See the
+[Supabase MCP guide](https://supabase.com/docs/guides/getting-started/mcp).
+
 ## Clean Cache
 
 ```bash

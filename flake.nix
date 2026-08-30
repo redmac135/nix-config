@@ -41,7 +41,15 @@
                 final: prev:
                   {
                     llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
-                    treehouse = treehouse.packages.${prev.stdenv.hostPlatform.system};
+                    treehouse =
+                      treehouse.packages.${prev.stdenv.hostPlatform.system}
+                      // {
+                        # Upstream's TestPruneSkipsUnmergedCommit is flaky in
+                        # sandboxed closure builds; its package is tested upstream.
+                        default = treehouse.packages.${prev.stdenv.hostPlatform.system}.default.overrideAttrs {
+                          doCheck = false;
+                        };
+                      };
                   }
                   // import ./packages/external-tools.nix {
                     pkgs = final;
