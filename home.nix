@@ -57,13 +57,14 @@
     # Utilities
     gh
     jq
+    supabase-cli
     taskwarrior3
 
     # https://github.com/numtide/llm-agents.nix
     llmAgents.codex
     llmAgents.opencode
     llmAgents.herdr
-	(llmAgents.pi.override {useBun = false;})
+    (llmAgents.pi.override {useBun = false;})
 
     # kunchenguid
     treehouse.default
