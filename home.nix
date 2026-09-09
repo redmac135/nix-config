@@ -2,7 +2,8 @@
   config,
   pkgs,
   ...
-}: {
+}:
+{
   home.username = "ezhao";
   home.homeDirectory = "/home/ezhao";
   home.stateVersion = "26.05";
@@ -28,6 +29,7 @@
 
     # Language Runtimes
     nodejs_22
+    pnpm
     python312
     deno
     bun
@@ -64,7 +66,7 @@
     llmAgents.codex
     llmAgents.opencode
     llmAgents.herdr
-    (llmAgents.pi.override {useBun = false;})
+    (llmAgents.pi.override { useBun = false; })
 
     # kunchenguid
     treehouse.default
