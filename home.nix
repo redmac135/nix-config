@@ -101,6 +101,7 @@
   programs.neovim = {
     enable = true;
     defaultEditor = true;
+    extraPackages = [pkgs.copilot-language-server];
 
     # Pre-compile Tree-sitter parsers into the Nix store
     plugins = let

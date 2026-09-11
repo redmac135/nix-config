@@ -4,6 +4,9 @@
   pkgs,
   ...
 }: {
+  nixpkgs.config.allowUnfreePredicate = pkg:
+    lib.getName pkg == "copilot-language-server";
+
   wsl.enable = true;
   wsl.defaultUser = "ezhao";
 
