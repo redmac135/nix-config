@@ -52,6 +52,13 @@ end, { desc = "Toggle comment (selection)" })
 -- CMP KEYMAPS --
 -- (Handled in cmp.lua)
 
+-- COPILOT KEYMAPS --
+local copilot_suggestion = require("copilot.suggestion")
+vim.keymap.set("i", "<M-l>", copilot_suggestion.accept, { desc = "Accept Copilot suggestion" })
+vim.keymap.set("i", "<M-]>", copilot_suggestion.next, { desc = "Next Copilot suggestion" })
+vim.keymap.set("i", "<M-[>", copilot_suggestion.prev, { desc = "Previous Copilot suggestion" })
+vim.keymap.set("i", "<C-]>", copilot_suggestion.dismiss, { desc = "Dismiss Copilot suggestion" })
+
 -- SNACKS LAZYGIT KEYMAPS --
 vim.keymap.set("n", "<leader>lg", function()
 	Snacks.lazygit.open()

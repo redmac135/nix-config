@@ -137,48 +137,63 @@ in {
   programs.neovim = {
     enable = true;
     defaultEditor = true;
+    extraPackages = [pkgs.copilot-language-server];
 
     # Pre-compile Tree-sitter parsers into the Nix store
-    plugins = with pkgs.vimPlugins; [
-      # UI & Theme
-      snacks-nvim
-      catppuccin-nvim
-      oil-nvim
+    plugins = let
+      copilotLua = pkgs.vimPlugins.copilot-lua.overrideAttrs {
+        src = pkgs.fetchFromGitHub {
+          owner = "zbirenbaum";
+          repo = "copilot.lua";
+          rev = "refs/tags/v3.0.0";
+          hash = "sha256-lfma6pmMPVs4AOwkj69UoSI6Ue7RW4rOuwa1+G5UJ50=";
+        };
+      };
+    in
+      with pkgs.vimPlugins; [
+        # UI & Theme
+        snacks-nvim
+        catppuccin-nvim
+        oil-nvim
 
-      # LSP & Formatting
-      nvim-lspconfig
-      conform-nvim
+        # LSP & Formatting
+        nvim-lspconfig
+        conform-nvim
 
-      # Mini suite
-      mini-nvim
+        # Mini suite
+        mini-nvim
 
-      # Completion & Snippets
-      nvim-cmp
-      cmp-nvim-lsp
-      luasnip
-      friendly-snippets
+        # Completion & Snippets
+        nvim-cmp
+        cmp-nvim-lsp
+        copilotLua
+        (copilot-cmp.overrideAttrs {
+          dependencies = [copilotLua];
+        })
+        luasnip
+        friendly-snippets
 
-      # Treesitter
-      nvim-ts-autotag
-      (nvim-treesitter.withPlugins (p: [
-        p.bash
-        p.c
-        p.cpp
-        p.css
-        p.dockerfile
-        p.go
-        p.html
-        p.javascript
-        p.json
-        p.lua
-        p.nix
-        p.python
-        p.rust
-        p.svelte
-        p.typescript
-        p.yaml
-      ]))
-    ];
+        # Treesitter
+        nvim-ts-autotag
+        (nvim-treesitter.withPlugins (p: [
+          p.bash
+          p.c
+          p.cpp
+          p.css
+          p.dockerfile
+          p.go
+          p.html
+          p.javascript
+          p.json
+          p.lua
+          p.nix
+          p.python
+          p.rust
+          p.svelte
+          p.typescript
+          p.yaml
+        ]))
+      ];
   };
 
   # Symlink Neovim config directory

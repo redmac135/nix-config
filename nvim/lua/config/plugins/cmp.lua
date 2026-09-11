@@ -1,7 +1,16 @@
-local cmp = require('cmp')
-local luasnip = require('luasnip')
+local cmp = require("cmp")
+local luasnip = require("luasnip")
 
 require("luasnip.loaders.from_vscode").lazy_load()
+require("copilot_cmp").setup()
+
+cmp.event:on("menu_opened", function()
+	vim.b.copilot_suggestion_hidden = true
+end)
+
+cmp.event:on("menu_closed", function()
+	vim.b.copilot_suggestion_hidden = false
+end)
 
 cmp.setup({
 	snippet = {
@@ -11,18 +20,17 @@ cmp.setup({
 	},
 	mapping = cmp.mapping.preset.insert({
 		-- Navigate completion menu
-		['<C-n>'] = cmp.mapping.select_next_item(),
-		['<C-p>'] = cmp.mapping.select_prev_item(),
+		["<C-n>"] = cmp.mapping.select_next_item(),
+		["<C-p>"] = cmp.mapping.select_prev_item(),
 
 		-- Trigger completion menu
-		['<C-Space>'] = cmp.mapping.complete(),
+		["<C-Space>"] = cmp.mapping.complete(),
 
 		-- Confirm selection
-		['<CR>'] = cmp.mapping.confirm({ select = false }),
-
+		["<CR>"] = cmp.mapping.confirm({ select = false }),
 
 		-- Tab behaviour:
-		['<Tab>'] = cmp.mapping(function(fallback)
+		["<Tab>"] = cmp.mapping(function(fallback)
 			if cmp.visible() then
 				cmp.confirm({ select = true })
 			elseif luasnip.expand_or_jumpable() then
@@ -30,25 +38,26 @@ cmp.setup({
 			else
 				fallback()
 			end
-		end, { 'i', 's' }),
+		end, { "i", "s" }),
 
-		['<S-Tab>'] = cmp.mapping(function(fallback)
+		["<S-Tab>"] = cmp.mapping(function(fallback)
 			if luasnip.jumpable(-1) then
 				luasnip.jump(-1)
 			else
 				fallback()
 			end
-		end, { 'i', 's' }),
+		end, { "i", "s" }),
 	}),
 	sources = cmp.config.sources({
-		{ name = 'nvim_lsp' },
-		{ name = 'luasnip' },
+		{ name = "nvim_lsp" },
+		{ name = "luasnip" },
 	}, {
-		{ name = 'buffer' },
+		{ name = "copilot", group_index = 2 },
+		{ name = "buffer" },
 	}),
 	completion = {
 		autocomplete = {
-			require('cmp.types').cmp.TriggerEvent.TextChanged,
-		}
+			require("cmp.types").cmp.TriggerEvent.TextChanged,
+		},
 	},
 })
