@@ -103,7 +103,14 @@
     defaultEditor = true;
 
     # Pre-compile Tree-sitter parsers into the Nix store
-    plugins = with pkgs.vimPlugins; [
+    plugins = let
+      copilotLua = pkgs.vimPlugins.copilot-lua.overrideAttrs (old: {
+        src = old.src.overrideAttrs {
+          outputHash = "sha256-lfma6pmMPVs4AOwkj69UoSI6Ue7RW4rOuwa1+G5UJ50=";
+        };
+      });
+    in
+      with pkgs.vimPlugins; [
       # UI & Theme
       snacks-nvim
       catppuccin-nvim
@@ -119,8 +126,10 @@
       # Completion & Snippets
       nvim-cmp
       cmp-nvim-lsp
-      copilot-lua
-      copilot-cmp
+      copilotLua
+      (copilot-cmp.overrideAttrs {
+        dependencies = [copilotLua];
+      })
       luasnip
       friendly-snippets
 
