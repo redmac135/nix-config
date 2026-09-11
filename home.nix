@@ -64,7 +64,6 @@ in {
 
     # Tauri v2 (Linux/WebKitGTK)
     pkg-config
-    wrapGAppsHook4
     gsettings-desktop-schemas
     librsvg
     librsvg.dev
