@@ -112,49 +112,49 @@
       });
     in
       with pkgs.vimPlugins; [
-      # UI & Theme
-      snacks-nvim
-      catppuccin-nvim
-      oil-nvim
+        # UI & Theme
+        snacks-nvim
+        catppuccin-nvim
+        oil-nvim
 
-      # LSP & Formatting
-      nvim-lspconfig
-      conform-nvim
+        # LSP & Formatting
+        nvim-lspconfig
+        conform-nvim
 
-      # Mini suite
-      mini-nvim
+        # Mini suite
+        mini-nvim
 
-      # Completion & Snippets
-      nvim-cmp
-      cmp-nvim-lsp
-      copilotLua
-      (copilot-cmp.overrideAttrs {
-        dependencies = [copilotLua];
-      })
-      luasnip
-      friendly-snippets
+        # Completion & Snippets
+        nvim-cmp
+        cmp-nvim-lsp
+        copilotLua
+        (copilot-cmp.overrideAttrs {
+          dependencies = [copilotLua];
+        })
+        luasnip
+        friendly-snippets
 
-      # Treesitter
-      nvim-ts-autotag
-      (nvim-treesitter.withPlugins (p: [
-        p.bash
-        p.c
-        p.cpp
-        p.css
-        p.dockerfile
-        p.go
-        p.html
-        p.javascript
-        p.json
-        p.lua
-        p.nix
-        p.python
-        p.rust
-        p.svelte
-        p.typescript
-        p.yaml
-      ]))
-    ];
+        # Treesitter
+        nvim-ts-autotag
+        (nvim-treesitter.withPlugins (p: [
+          p.bash
+          p.c
+          p.cpp
+          p.css
+          p.dockerfile
+          p.go
+          p.html
+          p.javascript
+          p.json
+          p.lua
+          p.nix
+          p.python
+          p.rust
+          p.svelte
+          p.typescript
+          p.yaml
+        ]))
+      ];
   };
 
   # Symlink Neovim config directory
