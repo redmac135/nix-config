@@ -1,14 +1,40 @@
 {
   config,
+  lib,
   pkgs,
   ...
-}: {
+}: let
+  tauriLibraries = with pkgs; [
+    webkitgtk_4_1
+    librsvg
+  ];
+  # WebKitGTK's runtime needs appsink from GStreamer for `tauri dev`.
+  tauriGStreamerPlugins = with pkgs; [
+    gst_all_1.gst-plugins-base
+  ];
+  tauriPkgConfigInputs =
+    (map (lib.getOutput "dev") tauriLibraries)
+    ++ lib.closePropagation tauriLibraries;
+  tauriPkgConfigPath = lib.concatStringsSep ":" (
+    map (subdir: lib.makeSearchPath subdir tauriPkgConfigInputs) [
+      "lib/pkgconfig"
+      "share/pkgconfig"
+    ]
+  );
+in {
   home.username = "ezhao";
   home.homeDirectory = "/home/ezhao";
   home.stateVersion = "26.05";
+
+  # Tauri's Nix build inputs are not setup-hook inputs when installed through
+  # home.packages, so expose the same pkg-config and GSettings paths here.
   home.sessionVariables = {
     BROWSER = "explorer.exe";
     NPM_CONFIG_PREFIX = "$HOME/.local";
+    PKG_CONFIG_PATH = "${tauriPkgConfigPath}\${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}";
+    GSETTINGS_SCHEMAS_PATH = "${pkgs.gsettings-desktop-schemas}/share/gsettings-schemas/${pkgs.gsettings-desktop-schemas.name}";
+    GST_PLUGIN_SYSTEM_PATH_1_0 = "${lib.makeSearchPath "lib/gstreamer-1.0" tauriGStreamerPlugins}\${GST_PLUGIN_SYSTEM_PATH_1_0:+:$GST_PLUGIN_SYSTEM_PATH_1_0}";
+    XDG_DATA_DIRS = "$GSETTINGS_SCHEMAS_PATH\${XDG_DATA_DIRS:+:$XDG_DATA_DIRS}";
   };
   home.sessionPath = [
     "$HOME/.local/bin"
@@ -35,6 +61,16 @@
     go
     cargo
     rustc
+
+    # Tauri v2 (Linux/WebKitGTK)
+    pkg-config
+    wrapGAppsHook4
+    gsettings-desktop-schemas
+    librsvg
+    librsvg.dev
+    webkitgtk_4_1
+    webkitgtk_4_1.dev
+    gst_all_1.gst-plugins-base
 
     # Language Servers (LSPs)
     lua-language-server
