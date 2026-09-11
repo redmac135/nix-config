@@ -26,6 +26,17 @@ sudo nixos-rebuild switch --flake .#surface
 sudo nixos-rebuild switch --flake .#desktop
 ```
 
+## GitHub Copilot in Neovim
+
+The Neovim configuration includes GitHub Copilot inline suggestions and
+completion-menu results. After rebuilding, run `:Copilot auth` in Neovim to
+sign in. Inline suggestions use these insert-mode keybindings:
+
+- `Alt-l`: accept the suggestion
+- `Alt-]`: show the next suggestion
+- `Alt-[`: show the previous suggestion
+- `Ctrl-]`: dismiss the suggestion
+
 ## Update packages
 
 Update one flake input at a time and review the resulting lock change:
