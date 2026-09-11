@@ -15,6 +15,10 @@ Update one input per PR with `nix flake update <input>`, review `flake.lock`, an
 - `no-mistakes` is `pkgs.buildGoModule` from the pinned GitHub tag; `subPackages = ["cmd/no-mistakes"]` is required (root package is test-only).
 - Each `*-axi` is `pkgs.buildNpmPackage` from the immutable npm registry tarball (prebuilt `dist/`; `dontNpmBuild = true`). To bump one, regenerate its lockfile with `npm install --package-lock-only --ignore-scripts` on the extracted tarball, replace `packages/firstmate/lockfiles/<pkg>.package-lock.json`, and update `version`, `tarballHash`, `npmDepsHash` (obtainable from the FOD hash-mismatch error, or `nix run nixpkgs#prefetch-npm-deps`).
 
+## Neovim organization
+
+Keep the Neovim configuration minimal and modern: general plugin setup belongs in `nvim/lua/config/plugins/`, native `nvim/after/`, `nvim/before/`, and `nvim/ftplugin/` layouts hold scoped overrides, and all keymaps belong in `nvim/lua/config/keymaps.lua`. The authoritative module load order is `nvim/init.lua`.
+
 ## Maintaining this file
 
 Keep this file for knowledge useful to almost every future agent session in this project.

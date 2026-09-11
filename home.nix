@@ -119,6 +119,8 @@
       # Completion & Snippets
       nvim-cmp
       cmp-nvim-lsp
+      copilot-lua
+      copilot-cmp
       luasnip
       friendly-snippets
 
