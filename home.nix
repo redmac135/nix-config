@@ -105,11 +105,14 @@
 
     # Pre-compile Tree-sitter parsers into the Nix store
     plugins = let
-      copilotLua = pkgs.vimPlugins.copilot-lua.overrideAttrs (old: {
-        src = old.src.overrideAttrs {
-          outputHash = "sha256-lfma6pmMPVs4AOwkj69UoSI6Ue7RW4rOuwa1+G5UJ50=";
+      copilotLua = pkgs.vimPlugins.copilot-lua.overrideAttrs {
+        src = pkgs.fetchFromGitHub {
+          owner = "zbirenbaum";
+          repo = "copilot.lua";
+          rev = "refs/tags/v3.0.0";
+          hash = "sha256-lfma6pmMPVs4AOwkj69UoSI6Ue7RW4rOuwa1+G5UJ50=";
         };
-      });
+      };
     in
       with pkgs.vimPlugins; [
         # UI & Theme
