@@ -28,6 +28,11 @@
     treehouse,
     ...
   }: let
+    systems = [
+      "aarch64-linux"
+      "x86_64-linux"
+    ];
+
     mkNixos = system:
       nixpkgs.lib.nixosSystem {
         inherit system;
@@ -72,5 +77,23 @@
       surface = mkNixos "aarch64-linux";
       desktop = mkNixos "x86_64-linux";
     };
+
+    devShells = nixpkgs.lib.genAttrs systems (system: {
+      tauri = let
+        pkgs = import nixpkgs {inherit system;};
+      in
+        pkgs.mkShell {
+          nativeBuildInputs = with pkgs; [
+            pkg-config
+            wrapGAppsHook4
+          ];
+
+          buildInputs = with pkgs; [
+            webkitgtk_4_1
+            librsvg
+            gst_all_1.gst-plugins-base
+          ];
+        };
+    });
   };
 }
