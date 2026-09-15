@@ -17,12 +17,28 @@
       "docker"
     ];
     shell = pkgs.zsh;
+    openssh.authorizedKeys.keys = [
+    ];
   };
 
   # Enable Docker daemon at system level
   virtualisation.docker.enable = true;
 
+  services.openssh = {
+    enable = true;
+
+    settings = {
+      PubkeyAuthentication = true;
+      PasswordAuthentication = false;
+      KbdInteractiveAuthentication = false;
+      AuthenticationMethods = "publickey";
+      PermitRootLogin = "no";
+    };
+  };
+
   services.tailscale.enable = true;
+
+  networking.firewall.trustedInterfaces = ["tailscale0"];
 
   # mirror Arch wsl fix: https://gitlab.archlinux.org/archlinux/archlinux-wsl/-/work_items/16
   systemd.services."getty@tty1".enable = false;
