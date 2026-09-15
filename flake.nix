@@ -33,12 +33,13 @@
       "x86_64-linux"
     ];
 
-    mkNixos = system:
+    mkNixos = system: hostName:
       nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
           nixos-wsl.nixosModules.default
           ./configuration.nix
+          {networking.hostName = hostName;}
 
           home-manager.nixosModules.home-manager
           {
@@ -74,8 +75,8 @@
       };
   in {
     nixosConfigurations = {
-      surface = mkNixos "aarch64-linux";
-      desktop = mkNixos "x86_64-linux";
+      onhandwsl = mkNixos "aarch64-linux" "onhandwsl";
+      pancakewsl = mkNixos "x86_64-linux" "pancakewsl";
     };
 
     devShells = nixpkgs.lib.genAttrs systems (system: {

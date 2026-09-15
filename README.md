@@ -13,8 +13,8 @@ Then clone the repo and rebuild nixos
 ```bash
 git clone https://github.com/redmac135/nix-config.git
 cd nix-config
-sudo nixos-rebuild switch --flake .#surface
-sudo nixos-rebuild switch --flake .#desktop
+sudo nixos-rebuild switch --flake .#onhandwsl
+sudo nixos-rebuild switch --flake .#pancakewsl
 ```
 
 ## Sync with config changes
@@ -22,8 +22,8 @@ sudo nixos-rebuild switch --flake .#desktop
 If config changes, just rerun the rebuild
 
 ```bash
-sudo nixos-rebuild switch --flake .#surface
-sudo nixos-rebuild switch --flake .#desktop
+sudo nixos-rebuild switch --flake .#onhandwsl
+sudo nixos-rebuild switch --flake .#pancakewsl
 ```
 
 ## GitHub Copilot in Neovim
@@ -50,8 +50,8 @@ Build the configuration matching the native host before opening the update. CI
 then builds both native closures before merge:
 
 ```bash
-nix build -L --no-link '.#nixosConfigurations.surface.config.system.build.toplevel'
-nix build -L --no-link '.#nixosConfigurations.desktop.config.system.build.toplevel'
+nix build -L --no-link '.#nixosConfigurations.onhandwsl.config.system.build.toplevel'
+nix build -L --no-link '.#nixosConfigurations.pancakewsl.config.system.build.toplevel'
 ```
 
 Keep each flake input update in its own PR. In particular, an `llm-agents`
