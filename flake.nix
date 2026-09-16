@@ -33,13 +33,16 @@
       "x86_64-linux"
     ];
 
-    mkNixos = system: hostName:
+    mkNixos = system: osName:
       nixpkgs.lib.nixosSystem {
         inherit system;
         modules = [
           nixos-wsl.nixosModules.default
           ./configuration.nix
-          {networking.hostName = hostName;}
+          {
+            networking.hostName = osName;
+            system.nixos.distroName = osName;
+          }
 
           home-manager.nixosModules.home-manager
           {
