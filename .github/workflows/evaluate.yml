@@ -13,9 +13,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - configuration: desktop
+          - configuration: pancakewsl
             runner: ubuntu-latest
-          - configuration: surface
+          - configuration: onhandwsl
             runner: ubuntu-24.04-arm
     runs-on: ${{ matrix.runner }}
     steps:
