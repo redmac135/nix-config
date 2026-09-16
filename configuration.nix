@@ -4,8 +4,7 @@
   pkgs,
   ...
 }: {
-  nixpkgs.config.allowUnfreePredicate = pkg:
-    lib.getName pkg == "copilot-language-server";
+  nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "copilot-language-server";
 
   wsl.enable = true;
   wsl.defaultUser = "ezhao";
@@ -18,8 +17,8 @@
     ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGwaOLmlmVgJwwxG/ColvYAL/D0ZehXqnFiPgV/DEwzw ezhao@nixos
-"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGwaOLmlmVgJwwxG/ColvYAL/D0ZehXqnFiPgV/DEwzw ezhao@onhandwsl"
+      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPYWG5w0FgJtRaRbwU6VI441YHvY1UIkMPWTaMksr/9s ezhao@pancakewsl"
     ];
   };
 
