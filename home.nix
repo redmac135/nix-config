@@ -31,6 +31,7 @@
     nodejs_22
     pnpm
     python312
+    lua5_4
     deno
     bun
     go
