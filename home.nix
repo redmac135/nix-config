@@ -24,6 +24,7 @@
     lazygit
     lazydocker
     cloudflared
+    esptool
     gcc
     gnumake
 
@@ -33,6 +34,7 @@
     (python312.withPackages (ps: with ps; [
       pip
       lupa
+      pyserial
     ]))
     lua5_4
     deno
