@@ -30,7 +30,10 @@
     # Language Runtimes
     nodejs_22
     pnpm
-    python312
+    (python312.withPackages (ps: with ps; [
+      pip
+      lupa
+    ]))
     lua5_4
     deno
     bun
