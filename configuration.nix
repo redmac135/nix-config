@@ -22,6 +22,9 @@
     ];
   };
 
+  # usbipd-wsl invokes modprobe when attaching USB devices from Windows.
+  environment.systemPackages = [pkgs.kmod];
+
   # Enable Docker daemon at system level
   virtualisation.docker.enable = true;
 
