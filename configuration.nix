@@ -14,6 +14,7 @@
     extraGroups = [
       "wheel"
       "docker"
+      "dialout"
     ];
     shell = pkgs.zsh;
     openssh.authorizedKeys.keys = [
