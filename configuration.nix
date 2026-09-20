@@ -43,6 +43,25 @@
 
   services.tailscale.enable = true;
 
+  # NixOS owns the Cloudflare Tunnel service; `cloudflared service install`
+  # cannot write /etc/systemd/system on an immutable NixOS system.
+  systemd.services.htn26-cloudflared = {
+    description = "HTN26 Cloudflare Tunnel";
+    wantedBy = ["multi-user.target"];
+    wants = ["network-online.target"];
+    after = ["network-online.target"];
+    serviceConfig = {
+      ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel run --token $CLOUDFLARED_TUNNEL_TOKEN";
+      EnvironmentFile = "-/var/lib/cloudflared/htn26.env";
+      Restart = "on-failure";
+      RestartSec = 5;
+    };
+  };
+
+  systemd.tmpfiles.rules = [
+    "d /var/lib/cloudflared 0750 root root -"
+  ];
+
   networking.firewall.trustedInterfaces = ["tailscale0"];
 
   # mirror Arch wsl fix: https://gitlab.archlinux.org/archlinux/archlinux-wsl/-/work_items/16
