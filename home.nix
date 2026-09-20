@@ -31,11 +31,14 @@
     # Language Runtimes
     nodejs_22
     pnpm
-    (python312.withPackages (ps: with ps; [
-      pip
-      lupa
-      pyserial
-    ]))
+    (python312.withPackages (ps:
+      with ps; [
+        pip
+        lupa
+        numpy
+        opencv4
+        pyserial
+      ]))
     lua5_4
     deno
     bun

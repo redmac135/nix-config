@@ -26,6 +26,21 @@ sudo nixos-rebuild switch --flake .#onhandwsl
 sudo nixos-rebuild switch --flake .#pancakewsl
 ```
 
+## HTN26 QNX-sidecar model runtime
+
+The Home Manager Python 3.12 environment includes NumPy and OpenCV's Python
+bindings. Apply the configuration for the laptop (`onhandwsl`), start a new
+shell, and verify both imports:
+
+```bash
+sudo nixos-rebuild switch --flake .#onhandwsl
+python -c 'import cv2, numpy'
+```
+
+In nixpkgs, the package is named `opencv4`, while Python imports it as `cv2`.
+The OpenCV and NumPy versions come from the nixpkgs revision pinned in
+`flake.lock`; they are intentionally not upgraded or pinned independently.
+
 ## GitHub Copilot in Neovim
 
 The Neovim configuration includes GitHub Copilot inline suggestions and
