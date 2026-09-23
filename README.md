@@ -41,6 +41,23 @@ In nixpkgs, the package is named `opencv4`, while Python imports it as `cv2`.
 The OpenCV and NumPy versions come from the nixpkgs revision pinned in
 `flake.lock`; they are intentionally not upgraded or pinned independently.
 
+## Neovim image previews
+
+Neovim enables Snacks image previews for the supported Kitty graphics protocol.
+On WSL, use Neovim inside WezTerm and rebuild Home Manager so ImageMagick's
+`magick` and `identify` commands are available:
+
+```bash
+sudo nixos-rebuild switch --flake .#onhandwsl
+nvim path/to/image.png
+```
+
+Snacks' picker preview (`<space>ff`) and direct image opening use the same
+image buffer path; normal text files continue to open as text. WezTerm has a
+known limitation: Snacks cannot render inline document images there, so this
+configuration uses the floating image view instead. Run `:checkhealth snacks`
+inside Neovim if terminal capability detection fails.
+
 ## GitHub Copilot in Neovim
 
 The Neovim configuration includes GitHub Copilot inline suggestions and

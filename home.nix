@@ -68,7 +68,7 @@
     # Utilities
     gh
     jq
-    chafa # ANSI image previews in Neovim/Windows Terminal
+    imagemagick # Snacks image previews use magick and identify
     supabase-cli
     taskwarrior3
 

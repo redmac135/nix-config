@@ -96,6 +96,8 @@ vim.keymap.set("n", "<leader>e", function()
 end, { desc = "Open Snacks Explorer", noremap = true, silent = true })
 
 -- IMAGE PREVIEW KEYMAPS --
+-- Keep the useful Oil entry shortcut from the image-preview work, but use
+-- Snacks' supported image buffer path instead of rendering ANSI art ourselves.
 local function image_under_cursor()
 	if vim.bo.filetype == "oil" then
 		local oil = require("oil")
@@ -113,32 +115,12 @@ end
 
 vim.keymap.set("n", "<leader>iv", function()
 	local file = image_under_cursor()
-	if not file or vim.fn.filereadable(file) ~= 1 then
-		vim.notify("No image file under cursor", vim.log.levels.WARN)
-		return
-	end
-	if vim.fn.executable("chafa") ~= 1 then
-		vim.notify("chafa is not installed; rebuild the Home Manager configuration", vim.log.levels.ERROR)
+	if not file or vim.fn.filereadable(file) ~= 1 or not Snacks.image.supports_file(file) then
+		vim.notify("No supported image file under cursor", vim.log.levels.WARN)
 		return
 	end
 
-	Snacks.terminal.open({
-		"chafa",
-		"--format=symbols",
-		"--colors=full",
-		"--animate=off",
-		"--size=80x40",
-		file,
-	}, {
-		interactive = false,
-		auto_close = false,
-		win = {
-			position = "float",
-			width = 0.9,
-			height = 0.8,
-			border = "rounded",
-			title = " Image Preview ",
-			title_pos = "center",
-		},
-	})
-end, { desc = "Preview image under cursor", noremap = true, silent = true })
+	-- BufReadCmd is owned by Snacks, so editing the path gives the same image
+	-- buffer as opening it from the command line or selecting it in the picker.
+	vim.cmd.edit(vim.fn.fnameescape(file))
+end, { desc = "Open image under cursor", noremap = true, silent = true })
