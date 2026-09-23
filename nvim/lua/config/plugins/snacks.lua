@@ -1,3 +1,5 @@
+-- Image previews use chafa through Snacks.terminal. This avoids assuming the
+-- Kitty graphics protocol, which Windows Terminal does not provide to WSL.
 require('snacks').setup({
 	lazygit = { enabled = true },
 	picker = { enabled = true },

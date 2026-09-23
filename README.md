@@ -52,6 +52,22 @@ sign in. Inline suggestions use these insert-mode keybindings:
 - `Alt-[`: show the previous suggestion
 - `Ctrl-]`: dismiss the suggestion
 
+## Neovim image previews
+
+Press `<leader>iv` while the cursor is on an image in Oil (or while its file
+buffer is active) to open an ANSI preview in a Snacks floating terminal. The
+configuration uses `chafa`, declared in `home.nix`, so it works in WSL through
+Windows Terminal without requiring a graphics protocol.
+
+Snacks' native image module uses the Kitty Graphics Protocol, which Windows
+Terminal does not provide to WSL, so it is intentionally not enabled here.
+`chafa` degrades to a normal notification when it is unavailable or the
+selected path cannot be read. Rebuild Home Manager after installation:
+
+```bash
+sudo nixos-rebuild switch --flake .#pancakewsl
+```
+
 ## Update packages
 
 Update one flake input at a time and review the resulting lock change:
