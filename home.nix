@@ -68,6 +68,7 @@
     # Utilities
     gh
     jq
+    chafa # ANSI image previews in Neovim/Windows Terminal
     supabase-cli
     taskwarrior3
 
