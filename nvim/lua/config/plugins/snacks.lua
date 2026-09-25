@@ -1,4 +1,10 @@
+-- Snacks uses the Kitty graphics protocol, which WezTerm supports in WSL.
+-- WezTerm cannot render Snacks' inline document images, so use its float view.
 require('snacks').setup({
+	image = {
+		enabled = true,
+		doc = { inline = false, float = true },
+	},
 	lazygit = { enabled = true },
 	picker = { enabled = true },
 	explorer = { enabled = true, auto_close = true },

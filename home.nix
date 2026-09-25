@@ -69,6 +69,7 @@
     # Utilities
     gh
     jq
+    imagemagick # Snacks image previews use magick and identify
     supabase-cli
     taskwarrior3
 

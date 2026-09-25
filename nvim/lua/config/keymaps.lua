@@ -94,3 +94,33 @@ end, { desc = "Pick Git Status" })
 vim.keymap.set("n", "<leader>e", function()
 	Snacks.explorer.open()
 end, { desc = "Open Snacks Explorer", noremap = true, silent = true })
+
+-- IMAGE PREVIEW KEYMAPS --
+-- Keep the useful Oil entry shortcut from the image-preview work, but use
+-- Snacks' supported image buffer path instead of rendering ANSI art ourselves.
+local function image_under_cursor()
+	if vim.bo.filetype == "oil" then
+		local oil = require("oil")
+		local entry = oil.get_cursor_entry()
+		local directory = oil.get_current_dir()
+		if entry and entry.type == "file" and directory then
+			return vim.fs.joinpath(directory, entry.name)
+		end
+		return nil
+	end
+
+	local file = vim.api.nvim_buf_get_name(0)
+	return file ~= "" and file or nil
+end
+
+vim.keymap.set("n", "<leader>iv", function()
+	local file = image_under_cursor()
+	if not file or vim.fn.filereadable(file) ~= 1 or not Snacks.image.supports_file(file) then
+		vim.notify("No supported image file under cursor", vim.log.levels.WARN)
+		return
+	end
+
+	-- BufReadCmd is owned by Snacks, so editing the path gives the same image
+	-- buffer as opening it from the command line or selecting it in the picker.
+	vim.cmd.edit(vim.fn.fnameescape(file))
+end, { desc = "Open image under cursor", noremap = true, silent = true })

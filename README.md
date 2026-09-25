@@ -41,6 +41,23 @@ In nixpkgs, the package is named `opencv4`, while Python imports it as `cv2`.
 The OpenCV and NumPy versions come from the nixpkgs revision pinned in
 `flake.lock`; they are intentionally not upgraded or pinned independently.
 
+## Neovim image previews
+
+Neovim enables Snacks image previews for the supported Kitty graphics protocol.
+On WSL, use Neovim inside WezTerm and rebuild Home Manager so ImageMagick's
+`magick` and `identify` commands are available:
+
+```bash
+sudo nixos-rebuild switch --flake .#onhandwsl
+nvim path/to/image.png
+```
+
+Snacks' picker preview (`<space>ff`) and direct image opening use the same
+image buffer path; normal text files continue to open as text. WezTerm has a
+known limitation: Snacks cannot render inline document images there, so this
+configuration uses the floating image view instead. Run `:checkhealth snacks`
+inside Neovim if terminal capability detection fails.
+
 ## GitHub Copilot in Neovim
 
 The Neovim configuration includes GitHub Copilot inline suggestions and
@@ -51,6 +68,22 @@ sign in. Inline suggestions use these insert-mode keybindings:
 - `Alt-]`: show the next suggestion
 - `Alt-[`: show the previous suggestion
 - `Ctrl-]`: dismiss the suggestion
+
+## Neovim image previews
+
+Press `<leader>iv` while the cursor is on an image in Oil (or while its file
+buffer is active) to open an ANSI preview in a Snacks floating terminal. The
+configuration uses `chafa`, declared in `home.nix`, so it works in WSL through
+Windows Terminal without requiring a graphics protocol.
+
+Snacks' native image module uses the Kitty Graphics Protocol, which Windows
+Terminal does not provide to WSL, so it is intentionally not enabled here.
+`chafa` degrades to a normal notification when it is unavailable or the
+selected path cannot be read. Rebuild Home Manager after installation:
+
+```bash
+sudo nixos-rebuild switch --flake .#pancakewsl
+```
 
 ## Update packages
 
