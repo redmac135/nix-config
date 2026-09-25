@@ -52,6 +52,7 @@
     dockerfile-language-server
     yaml-language-server
     svelte-language-server
+    typescript-language-server
     pyright
     nil # nix LSP
     bash-language-server
