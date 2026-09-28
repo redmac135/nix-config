@@ -9,7 +9,6 @@
 
   home.sessionVariables = {
     BROWSER = "explorer.exe";
-    NPM_CONFIG_PREFIX = "$HOME/.local";
   };
   home.sessionPath = [
     "$HOME/.local/bin"
@@ -27,24 +26,8 @@
     esptool
     gcc
     gnumake
-
-    # Language Runtimes
-    nodejs_22
-    pnpm
-    (python312.withPackages (ps:
-      with ps; [
-        pip
-        lupa
-        numpy
-        opencv4
-        pyserial
-      ]))
-    lua5_4
-    deno
-    bun
-    go
-    cargo
-    rustc
+    mise
+    uv
 
     # Language Servers (LSPs)
     lua-language-server
@@ -233,6 +216,8 @@
     };
 
     initContent = ''
+      eval "$(mise activate zsh)"
+
       # Autosuggestions strategy
       ZSH_AUTOSUGGEST_STRATEGY=(history completion)
       ZSH_AUTOSUGGEST_HIGHLIGHT_STYLE='fg=8'
@@ -253,6 +238,7 @@
   # Files
   # ---------------------------------------------------------------------------
 
+  xdg.configFile."mise/config.toml".source = ./files/mise/config.toml;
   home.file.".AGENTS.md".source = ./files/AGENTS.md;
   home.file.".CLAUDE.md".source = ./files/AGENTS.md;
 }
