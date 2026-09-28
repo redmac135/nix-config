@@ -1,0 +1,274 @@
+#!/usr/bin/env bash
+# Update the npm tools declared by packages/external-tools.nix.
+#
+# This intentionally has no default action: use --preview to inspect changes or
+# --apply to write them.  The working tree must be clean for both operations.
+set -Eeuo pipefail
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=${FIRSTMATE_UPDATE_REPO_ROOT:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}
+TOOLS_FILE=${FIRSTMATE_UPDATE_TOOLS_FILE:-$REPO_ROOT/packages/external-tools.nix}
+LOCK_DIR=${FIRSTMATE_UPDATE_LOCK_DIR:-$REPO_ROOT/packages/firstmate/lockfiles}
+
+usage() {
+  cat <<'EOF'
+Usage:
+  scripts/update-firstmate-tools --preview [--all|PACKAGE [VERSION]]
+  scripts/update-firstmate-tools --apply   [--all|PACKAGE [VERSION]]
+
+Without VERSION, npm's current latest release is selected.  --all is opt-in
+and updates every *-axi package declared in packages/external-tools.nix.
+EOF
+}
+
+fail() {
+  echo "update-firstmate-tools: $*" >&2
+  exit 1
+}
+
+mode=
+all=0
+positional=()
+while (($#)); do
+  case $1 in
+    --preview|--apply)
+      [[ -z $mode ]] || fail "choose exactly one of --preview or --apply"
+      mode=${1#--}
+      ;;
+    --all)
+      ((all = 1))
+      ;;
+    --help|-h)
+      usage
+      exit 0
+      ;;
+    --*)
+      fail "unknown option: $1"
+      ;;
+    *)
+      positional+=("$1")
+      ;;
+  esac
+  shift
+done
+
+[[ -n $mode ]] || { usage >&2; fail "an explicit --preview or --apply is required"; }
+if ((all)); then
+  ((${#positional[@]} == 0)) || fail "--all cannot be combined with a package or version"
+else
+  ((${#positional[@]} <= 2)) || fail "expected PACKAGE [VERSION]"
+fi
+if ((${#positional[@]} == 2)) && [[ ${positional[1]} == -* ]]; then
+  fail "version must not begin with '-': ${positional[1]}"
+fi
+
+cd "$REPO_ROOT"
+[[ -f $TOOLS_FILE ]] || fail "tools file does not exist: $TOOLS_FILE"
+[[ -d $LOCK_DIR ]] || fail "lockfile directory does not exist: $LOCK_DIR"
+
+# Refuse states where applying a generated set of files could accidentally
+# include somebody else's work or be hard to recover from.
+git_root=$(git rev-parse --show-toplevel 2>/dev/null) || fail "not inside a git repository"
+[[ $git_root == "$REPO_ROOT" ]] || fail "repository root is not $REPO_ROOT"
+git symbolic-ref --quiet HEAD >/dev/null || fail "detached HEAD is ambiguous"
+for marker in MERGE_HEAD CHERRY_PICK_HEAD REVERT_HEAD; do
+  [[ ! -e .git/$marker ]] || fail "git operation in progress ($marker)"
+done
+[[ ! -d .git/rebase-merge && ! -d .git/rebase-apply ]] || fail "git rebase in progress"
+[[ -z $(git status --porcelain=v1 --untracked-files=all) ]] || fail "working tree must be clean"
+[[ -z $(git ls-files --unmerged) ]] || fail "unmerged paths are ambiguous"
+
+mapfile -t declared < <(awk '
+  /mkNpmTool[[:space:]]*{/ { in_tool = 1; next }
+  in_tool && /^[[:space:]]*pname[[:space:]]*=/ {
+    gsub(/[";]/, "", $3); print $3; in_tool = 0
+  }
+' "$TOOLS_FILE")
+((${#declared[@]})) || fail "no mkNpmTool packages found in $TOOLS_FILE"
+
+# The updater is deliberately limited to the npm CLI entries, not the Go
+# no-mistakes derivation or any package that happens to be added elsewhere.
+packages=()
+for package in "${declared[@]}"; do
+  [[ $package == *-axi ]] || continue
+  packages+=("$package")
+done
+((${#packages[@]})) || fail "no -axi npm packages found in $TOOLS_FILE"
+
+contains_package() {
+  local wanted=$1 package
+  for package in "${packages[@]}"; do
+    [[ $package == "$wanted" ]] && return 0
+  done
+  return 1
+}
+
+selected=()
+requested_version=
+if ((all)); then
+  selected=("${packages[@]}")
+else
+  package=${positional[0]:-}
+  [[ -n $package ]] || fail "PACKAGE is required unless --all is used"
+  contains_package "$package" || fail "package is not declared by external-tools.nix: $package"
+  selected=("$package")
+  requested_version=${positional[1]:-}
+fi
+
+command -v npm >/dev/null 2>&1 || fail "npm is required"
+command -v python3 >/dev/null 2>&1 || fail "python3 is required"
+command -v tar >/dev/null 2>&1 || fail "tar is required"
+
+hash_file() {
+  local url=$1 output hash
+  if [[ -n ${FIRSTMATE_UPDATE_TARBALL_HASH_CMD:-} ]]; then
+    output=$("$FIRSTMATE_UPDATE_TARBALL_HASH_CMD" "$url")
+  else
+    command -v nix >/dev/null 2>&1 || fail "nix is required to hash tarballs"
+    output=$(nix store prefetch-file --json --hash-type sha256 "$url")
+  fi
+  hash=$(printf '%s\n' "$output" | python3 -c 'import json,sys
+s=sys.stdin.read().strip()
+try:
+    print(json.loads(s)["hash"])
+except json.JSONDecodeError:
+    print(s.splitlines()[-1])')
+  [[ $hash == sha256-* ]] || fail "could not obtain a SRI tarball hash for $url"
+  printf '%s' "$hash"
+}
+
+npm_deps_hash() {
+  local lock=$1 output hash
+  if [[ -n ${FIRSTMATE_UPDATE_NPM_DEPS_HASH_CMD:-} ]]; then
+    output=$("$FIRSTMATE_UPDATE_NPM_DEPS_HASH_CMD" "$lock")
+  else
+    command -v nix >/dev/null 2>&1 || fail "nix is required to hash npm dependencies"
+    output=$(nix run nixpkgs#prefetch-npm-deps -- "$lock" 2>&1)
+  fi
+  hash=$(printf '%s\n' "$output" | grep -Eo 'sha256-[A-Za-z0-9+/=]+' | tail -n1 || true)
+  [[ $hash == sha256-* ]] || fail "could not obtain an npm dependency hash for $lock"
+  printf '%s' "$hash"
+}
+
+workdir=$(mktemp -d "${TMPDIR:-/tmp}/update-firstmate-tools.XXXXXX")
+cleanup() { rm -rf "$workdir"; }
+trap cleanup EXIT
+staged_tools=$workdir/external-tools.nix
+cp "$TOOLS_FILE" "$staged_tools"
+updates=$workdir/updates.tsv
+: > "$updates"
+
+for package in "${selected[@]}"; do
+  version=$requested_version
+  if [[ -z $version || $all == 1 ]]; then
+    version=$(npm view "$package" version --json | python3 -c 'import json,sys
+raw=sys.stdin.read().strip()
+try: value=json.loads(raw)
+except json.JSONDecodeError: value=raw
+if not isinstance(value, str) or not value or any(c in value for c in "\r\n/\\"):
+    raise SystemExit("invalid version returned by npm")
+print(value)') || fail "could not resolve latest version for $package"
+  fi
+  [[ $version != -* && $version != */* && $version != *\\* ]] || fail "invalid version: $version"
+
+  package_work=$workdir/$package
+  mkdir -p "$package_work"
+  npm pack "$package@$version" --ignore-scripts --pack-destination "$package_work" >/dev/null \
+    || fail "npm pack failed for $package@$version"
+  mapfile -t tarballs < <(find "$package_work" -maxdepth 1 -type f -name '*.tgz' -print)
+  ((${#tarballs[@]} == 1)) || fail "npm pack did not produce exactly one tarball for $package@$version"
+  tarball=${tarballs[0]}
+  tar -xzf "$tarball" -C "$package_work" || fail "could not unpack $tarball"
+  [[ -f $package_work/package/package.json ]] || fail "npm tarball has no package.json"
+
+  # Generate the vendored lock from the exact published package.  Scripts are
+  # disabled because the published dist/ is intentionally not rebuilt by Nix.
+  (
+    cd "$package_work/package"
+    npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+  ) || fail "could not generate package-lock.json for $package@$version"
+  [[ -f $package_work/package/package-lock.json ]] || fail "npm did not generate package-lock.json"
+
+  tarball_url="https://registry.npmjs.org/$package/-/$package-$version.tgz"
+  tarball_hash=$(hash_file "$tarball_url")
+  deps_hash=$(npm_deps_hash "$package_work/package/package-lock.json")
+  lock_name=$LOCK_DIR/$package.package-lock.json
+  [[ -f $lock_name ]] || fail "lockfile is not declared for $package: $lock_name"
+  cp "$package_work/package/package-lock.json" "$workdir/$package.package-lock.json"
+  printf '%s\t%s\t%s\t%s\n' "$package" "$version" "$tarball_hash" "$deps_hash" >> "$updates"
+  printf '  %s: %s (tarball %s, npm deps %s)\n' "$package" "$version" "$tarball_hash" "$deps_hash"
+done
+
+python3 - "$staged_tools" "$updates" <<'PY'
+import re
+import sys
+from pathlib import Path
+
+tools = Path(sys.argv[1])
+updates = {}
+for line in Path(sys.argv[2]).read_text().splitlines():
+    package, version, tarball_hash, deps_hash = line.split("\t")
+    updates[package] = (version, tarball_hash, deps_hash)
+
+text = tools.read_text()
+for package, (version, tarball_hash, deps_hash) in updates.items():
+    blocks = list(re.finditer(r"(?ms)^(?P<indent>\s*)[A-Za-z0-9_-]+ = mkNpmTool \{(?P<body>.*?^\s*};)", text))
+    matches = [m for m in blocks if re.search(rf'^\s*pname = "{re.escape(package)}";', m.group("body"), re.M)]
+    if len(matches) != 1:
+        raise SystemExit(f"expected one mkNpmTool block for {package}, found {len(matches)}")
+    match = matches[0]
+    body = match.group("body")
+    for field, value in (("version", version), ("tarballHash", tarball_hash), ("npmDepsHash", deps_hash)):
+        body, count = re.subn(rf'(^\s*{field} = ")[^"]+(";)', rf'\g<1>{value}\2', body, count=1, flags=re.M)
+        if count != 1:
+            raise SystemExit(f"expected one {field} in {package}")
+    text = text[:match.start("body")] + body + text[match.end("body"):]
+tools.write_text(text)
+PY
+
+# A preview never touches tracked files; show exactly what apply would write.
+if [[ $mode == preview ]]; then
+  echo "Preview (no files changed):"
+  for package in "${selected[@]}"; do
+    diff -u "$LOCK_DIR/$package.package-lock.json" "$workdir/$package.package-lock.json" || true
+  done
+  diff -u "$TOOLS_FILE" "$staged_tools" || true
+  exit 0
+fi
+
+# Commit the generated file set to the working tree as one transaction.  If a
+# copy, validation, or test hook fails, restore every original byte.
+backup=$workdir/backup
+mkdir -p "$backup"
+cp "$TOOLS_FILE" "$backup/external-tools.nix"
+for package in "${selected[@]}"; do
+  cp "$LOCK_DIR/$package.package-lock.json" "$backup/$package.package-lock.json"
+done
+transaction_started=0
+transaction_done=0
+rollback() {
+  local status=$?
+  if ((transaction_started && !transaction_done)); then
+    cp "$backup/external-tools.nix" "$TOOLS_FILE" || true
+    for package in "${selected[@]}"; do
+      cp "$backup/$package.package-lock.json" "$LOCK_DIR/$package.package-lock.json" || true
+    done
+    echo "update-firstmate-tools: transaction rolled back" >&2
+  fi
+  cleanup
+  return "$status"
+}
+trap rollback EXIT
+transaction_started=1
+cp "$staged_tools" "$TOOLS_FILE"
+for package in "${selected[@]}"; do
+  cp "$workdir/$package.package-lock.json" "$LOCK_DIR/$package.package-lock.json"
+done
+if [[ ${FIRSTMATE_UPDATE_TEST_FAIL_AFTER:-0} == 1 ]]; then
+  fail "test failure after transaction writes"
+fi
+git diff --check || fail "generated diff has whitespace errors"
+transaction_done=1
+trap - EXIT
+cleanup
+printf 'Applied %s update(s). Review with: git diff -- packages/external-tools.nix packages/firstmate/lockfiles\n' "${#selected[@]}"

@@ -58,12 +58,47 @@ Keep each flake input update in its own PR. In particular, an `llm-agents`
 update can change Pi, Herdr, and OpenCode together, so review all three selected
 versions.
 
-The custom npm tools in `packages/external-tools.nix` are pinned separately. To
-bump one, generate its vendored `package-lock.json` with
-`npm install --package-lock-only --ignore-scripts`, replace the matching lockfile
-under `packages/firstmate/lockfiles/`, and update its `version`, `tarballHash`,
-and `npmDepsHash` in `packages/external-tools.nix`.
-Update one tool per PR.
+The custom npm tools in `packages/external-tools.nix` are pinned separately.
+Use the updater for a reviewable, transactional change. It refuses dirty or
+ambiguous Git state, and preview is always side-effect free in the worktree:
+
+```bash
+# Inspect one package's latest release (no tracked files are changed)
+./scripts/update-firstmate-tools --preview gh-axi
+# Inspect an explicitly requested version
+./scripts/update-firstmate-tools --preview gh-axi 0.1.29
+# Apply one package after reviewing the preview
+./scripts/update-firstmate-tools --apply gh-axi
+# All packages is intentionally opt-in
+./scripts/update-firstmate-tools --preview --all
+./scripts/update-firstmate-tools --apply --all
+
+git diff --check
+git diff -- packages/external-tools.nix packages/firstmate/lockfiles
+```
+
+The script downloads the published tarball, regenerates its vendored
+`package-lock.json` with scripts disabled, and computes both Nix hashes. A
+failed apply rolls back all files; review and commit the resulting diff
+manually. The updater is limited to the `*-axi` packages declared by
+`packages/external-tools.nix`.
+
+After review, validate both native closures and manually rebuild the matching
+host:
+
+```bash
+nix build -L --no-link '.#nixosConfigurations.onhandwsl.config.system.build.toplevel'
+nix build -L --no-link '.#nixosConfigurations.pancakewsl.config.system.build.toplevel'
+sudo nixos-rebuild switch --flake .#onhandwsl
+sudo nixos-rebuild switch --flake .#pancakewsl
+```
+
+Home Manager activation runs `mise install --yes` as `ezhao`, with the global
+config pinned in `MISE_CONFIG_FILE`, after writing
+`~/.config/mise/config.toml`. `programs.nix-ld.enable` supplies the
+linker for mise's upstream Node.js and Python binaries; `gcc`, `gnumake`, and
+`pkg-config` are the minimal native build tools retained for a source-build
+fallback.
 
 `firstmate.no-mistakes` is a separate Go package. Update its exact release tag,
 source hash, `vendorHash`, and release `ldflags` independently from npm and flake

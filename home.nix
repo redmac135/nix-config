@@ -1,5 +1,6 @@
 {
   config,
+  lib,
   pkgs,
   ...
 }: {
@@ -24,8 +25,11 @@
     lazydocker
     cloudflared
     esptool
+    # mise-managed Node/Python builds need a compiler, make, and pkg-config;
+    # prebuilt tool archives do not need a larger language-runtime closure.
     gcc
     gnumake
+    pkg-config
     mise
     uv
 
@@ -53,7 +57,6 @@
     gh
     jq
     supabase-cli
-    taskwarrior3
 
     # https://github.com/numtide/llm-agents.nix
     llmAgents.codex
@@ -233,6 +236,16 @@
   };
 
   programs.home-manager.enable = true;
+
+  # Install the tools from the global mise config after Home Manager has
+  # materialized it.  Activation runs as ezhao, so mise uses the user's
+  # existing cache and config rather than a root-owned environment.
+  home.activation.miseInstall = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    export HOME=${config.home.homeDirectory}
+    export PATH="${config.home.profileDirectory}/bin:$PATH"
+    export MISE_CONFIG_FILE="$HOME/.config/mise/config.toml"
+    ${pkgs.mise}/bin/mise install --yes
+  '';
 
   # ---------------------------------------------------------------------------
   # Files

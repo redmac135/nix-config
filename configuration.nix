@@ -45,14 +45,14 @@
 
   # NixOS owns the Cloudflare Tunnel service; `cloudflared service install`
   # cannot write /etc/systemd/system on an immutable NixOS system.
-  systemd.services.htn26-cloudflared = {
-    description = "HTN26 Cloudflare Tunnel";
+  systemd.services.onhandwsl-tunnel = {
+    description = "Onhand WSL Cloudflare Tunnel";
     wantedBy = ["multi-user.target"];
     wants = ["network-online.target"];
     after = ["network-online.target"];
     serviceConfig = {
       ExecStart = "${pkgs.cloudflared}/bin/cloudflared tunnel run --token $CLOUDFLARED_TUNNEL_TOKEN";
-      EnvironmentFile = "-/var/lib/cloudflared/htn26.env";
+      EnvironmentFile = "-/var/lib/cloudflared/onhandwsl.env";
       Restart = "on-failure";
       RestartSec = 5;
     };
@@ -68,6 +68,11 @@
   systemd.services."getty@tty1".enable = false;
 
   programs.zsh.enable = true;
+
+  # mise downloads upstream Node.js and Python binaries, whose dynamic
+  # linker paths are not known to Nix.  nix-ld supplies the host linker and
+  # common runtime libraries without packaging each mise tool in Nix.
+  programs.nix-ld.enable = true;
 
   nix.settings = {
     experimental-features = [
