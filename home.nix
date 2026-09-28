@@ -25,8 +25,10 @@
     lazydocker
     cloudflared
     esptool
-    # mise-managed Node/Python builds need a compiler, make, and pkg-config;
-    # prebuilt tool archives do not need a larger language-runtime closure.
+    # mise-managed Node/Python builds need a host Python interpreter,
+    # compiler, make, and pkg-config; prebuilt archives do not need a larger
+    # language-runtime closure.
+    python3
     gcc
     gnumake
     pkg-config

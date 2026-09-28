@@ -96,9 +96,9 @@ sudo nixos-rebuild switch --flake .#pancakewsl
 Home Manager activation runs `mise install --yes` as `ezhao`, with the global
 config pinned in `MISE_CONFIG_FILE`, after writing
 `~/.config/mise/config.toml`. `programs.nix-ld.enable` supplies the
-linker for mise's upstream Node.js and Python binaries; `gcc`, `gnumake`, and
-`pkg-config` are the minimal native build tools retained for a source-build
-fallback.
+linker for mise's upstream Node.js and Python binaries; `python3`, `gcc`,
+`gnumake`, and `pkg-config` are the minimal host/build tools retained for a
+source-build fallback (Node's configure script requires the `python` command).
 
 `firstmate.no-mistakes` is a separate Go package. Update its exact release tag,
 source hash, `vendorHash`, and release `ldflags` independently from npm and flake
