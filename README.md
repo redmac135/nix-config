@@ -104,8 +104,10 @@ supplies the linker for mise's upstream Node.js and Python binaries. `python3`
 supplies the `python` configure command, `gcc` and `gnumake` compile source
 fallbacks, `pkg-config` and `zlib.dev` provide build metadata and headers,
 `openssl.dev` provides TLS headers, and `gnupg` verifies released tool archives.
-The global mise config pins Node.js 24, uses prebuilt Node.js and Python
-artifacts, and its bundled npm is validated by `tests/mise-install.sh`.
+The global mise config pins Node.js 24 and explicitly selects prebuilt Node.js
+and Python artifacts; without those settings, mise selected aarch64 source
+archives and spent minutes compiling Node. Its bundled npm is validated by
+`tests/mise-install.sh`.
 CI builds both host closures and runs the bounded manual Node.js, npm, and
 Python mise install.
 If an interrupted rebuild leaves a transient unit loaded, stop it before retrying:
