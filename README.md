@@ -77,10 +77,10 @@ git diff --check
 git diff -- packages/external-tools.nix packages/firstmate/lockfiles
 ```
 
-The activation regression test checks the generated user environment and PATH:
+The manual-install regression test checks the generated user environment:
 
 ```bash
-./tests/mise-activation.sh
+./tests/mise-install.sh
 ```
 
 The script downloads the published tarball, regenerates its vendored
@@ -99,18 +99,15 @@ sudo nixos-rebuild switch --flake .#onhandwsl
 sudo nixos-rebuild switch --flake .#pancakewsl
 ```
 
-Home Manager activation runs a bounded synchronous `mise install --yes` as
-`ezhao`, with the global config pinned in `MISE_GLOBAL_CONFIG_FILE`. The
-15-minute timeout makes failures visible in the Home Manager journal and lets
-switch report failure instead of returning before installation completes.
-`programs.nix-ld.enable` supplies the linker for mise's upstream Node.js and
-Python binaries. `python3` supplies the `python` configure command, `gcc` and
-`gnumake` compile source fallbacks, `pkg-config` and `zlib.dev` provide build
-metadata and headers, `openssl.dev` provides TLS headers, and `gnupg` verifies
-released tool archives. The global mise config pins Node.js 24; its bundled npm
-is validated by `tests/mise-activation.sh`.
-CI builds both host closures and runs bounded Node.js, npm, and Python mise
-installs on the ARM host path; it cannot execute a real WSL systemd activation.
+Mise tools are installed manually with `mise install` after switching. `programs.nix-ld.enable`
+supplies the linker for mise's upstream Node.js and Python binaries. `python3`
+supplies the `python` configure command, `gcc` and `gnumake` compile source
+fallbacks, `pkg-config` and `zlib.dev` provide build metadata and headers,
+`openssl.dev` provides TLS headers, and `gnupg` verifies released tool archives.
+The global mise config pins Node.js 24, uses prebuilt Node.js and Python
+artifacts, and its bundled npm is validated by `tests/mise-install.sh`.
+CI builds both host closures and runs the bounded manual Node.js, npm, and
+Python mise install.
 If an interrupted rebuild leaves a transient unit loaded, stop it before retrying:
 
 ```bash

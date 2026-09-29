@@ -1,6 +1,5 @@
 {
   config,
-  lib,
   pkgs,
   ...
 }: {
@@ -238,21 +237,6 @@
   };
 
   programs.home-manager.enable = true;
-
-  home.activation.miseInstall = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    export HOME=${config.home.homeDirectory}
-    export PATH="${config.home.profileDirectory}/bin:$PATH"
-    export CPATH="${config.home.profileDirectory}/include''${CPATH:+:$CPATH}"
-    export LIBRARY_PATH="${config.home.profileDirectory}/lib''${LIBRARY_PATH:+:$LIBRARY_PATH}"
-    export PKG_CONFIG_PATH="${config.home.profileDirectory}/lib/pkgconfig''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
-    export NIX_LD="${pkgs.nix-ld}/libexec/nix-ld"
-    export NIX_LD_LIBRARY_PATH="/run/current-system/sw/share/nix-ld/lib"
-    export MISE_GLOBAL_CONFIG_FILE="$HOME/.config/mise/config.toml"
-    export MISE_NODE_GPG_VERIFY=true
-    export MISE_VERBOSE=1
-    ${pkgs.coreutils}/bin/timeout --foreground --kill-after=30s 15m \
-      ${pkgs.mise}/bin/mise install --yes
-  '';
 
   # ---------------------------------------------------------------------------
   # Files
