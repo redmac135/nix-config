@@ -80,7 +80,8 @@ git diff -- packages/external-tools.nix packages/firstmate/lockfiles
 The manual-install regression test checks the generated user environment:
 
 ```bash
-./tests/mise-install.sh
+./tests/mise-install.sh onhandwsl
+./tests/mise-install.sh pancakewsl
 ```
 
 The script downloads the published tarball, regenerates its vendored
@@ -107,9 +108,9 @@ fallbacks, `pkg-config` and `zlib.dev` provide build metadata and headers,
 The global mise config pins Node.js 24 and explicitly selects prebuilt Node.js
 and Python artifacts; without those settings, mise selected aarch64 source
 archives and spent minutes compiling Node. Its bundled npm is validated by
-`tests/mise-install.sh`.
-CI builds both host closures and runs the bounded manual Node.js, npm, and
-Python mise install.
+`tests/mise-install.sh`. CI builds both host closures and runs the bounded
+manual Node.js, npm, and Python mise install on each native runner; an
+architecture-mismatched runner cannot build the other host's profile.
 If an interrupted rebuild leaves a transient unit loaded, stop it before retrying:
 
 ```bash
