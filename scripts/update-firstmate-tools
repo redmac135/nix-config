@@ -1,8 +1,5 @@
 #!/usr/bin/env bash
-# Update the npm tools declared by packages/external-tools.nix.
-#
-# This intentionally has no default action: use --preview to inspect changes or
-# --apply to write them.  The working tree must be clean for both operations.
+# Update declared npm tools with explicit preview or apply mode.
 set -Eeuo pipefail
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -66,8 +63,7 @@ cd "$REPO_ROOT"
 [[ -f $TOOLS_FILE ]] || fail "tools file does not exist: $TOOLS_FILE"
 [[ -d $LOCK_DIR ]] || fail "lockfile directory does not exist: $LOCK_DIR"
 
-# Refuse states where applying a generated set of files could accidentally
-# include somebody else's work or be hard to recover from.
+# Refuse dirty or ambiguous Git state.
 git_root=$(git rev-parse --show-toplevel 2>/dev/null) || fail "not inside a git repository"
 [[ $git_root == "$REPO_ROOT" ]] || fail "repository root is not $REPO_ROOT"
 git symbolic-ref --quiet HEAD >/dev/null || fail "detached HEAD is ambiguous"
@@ -86,8 +82,7 @@ mapfile -t declared < <(awk '
 ' "$TOOLS_FILE")
 ((${#declared[@]})) || fail "no mkNpmTool packages found in $TOOLS_FILE"
 
-# The updater is deliberately limited to the npm CLI entries, not the Go
-# no-mistakes derivation or any package that happens to be added elsewhere.
+# Limit updates to declared -axi packages.
 packages=()
 for package in "${declared[@]}"; do
   [[ $package == *-axi ]] || continue
@@ -181,8 +176,7 @@ print(value)') || fail "could not resolve latest version for $package"
   tar -xzf "$tarball" -C "$package_work" || fail "could not unpack $tarball"
   [[ -f $package_work/package/package.json ]] || fail "npm tarball has no package.json"
 
-  # Generate the vendored lock from the exact published package.  Scripts are
-  # disabled because the published dist/ is intentionally not rebuilt by Nix.
+  # Generate the vendored lock without running package scripts.
   (
     cd "$package_work/package"
     npm install --package-lock-only --ignore-scripts --no-audit --no-fund
@@ -226,7 +220,7 @@ for package, (version, tarball_hash, deps_hash) in updates.items():
 tools.write_text(text)
 PY
 
-# A preview never touches tracked files; show exactly what apply would write.
+# Preview only prints staged diffs.
 if [[ $mode == preview ]]; then
   echo "Preview (no files changed):"
   for package in "${selected[@]}"; do
@@ -236,8 +230,7 @@ if [[ $mode == preview ]]; then
   exit 0
 fi
 
-# Commit the generated file set to the working tree as one transaction.  If a
-# copy, validation, or test hook fails, restore every original byte.
+# Apply generated files transactionally.
 backup=$workdir/backup
 mkdir -p "$backup"
 cp "$TOOLS_FILE" "$backup/external-tools.nix"

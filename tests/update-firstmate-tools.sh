@@ -105,8 +105,7 @@ git -C "$fixture" diff --exit-code
 run --apply --all >/dev/null
 grep -q 'version = "9.9.9"' "$fixture/packages/external-tools.nix"
 
-# Force an error after files have been copied. The EXIT trap must restore both
-# the Nix expression and lockfile byte-for-byte.
+# Verify rollback after a write failure.
 git -C "$fixture" add . && git -C "$fixture" commit -qm all
 before_tools=$(sha256sum "$fixture/packages/external-tools.nix")
 before_lock=$(sha256sum "$fixture/packages/firstmate/lockfiles/alpha-axi.package-lock.json")

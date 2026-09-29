@@ -25,13 +25,13 @@
     lazydocker
     cloudflared
     esptool
-    # mise-managed Node/Python builds need a host Python interpreter,
-    # compiler, make, and pkg-config; prebuilt archives do not need a larger
-    # language-runtime closure.
     python3
     gcc
     gnumake
     pkg-config
+    zlib.dev
+    openssl.dev
+    gnupg
     mise
     uv
 
@@ -239,14 +239,35 @@
 
   programs.home-manager.enable = true;
 
-  # Install the tools from the global mise config after Home Manager has
-  # materialized it.  Activation runs as ezhao, so mise uses the user's
-  # existing cache and config rather than a root-owned environment.
   home.activation.miseInstall = lib.hm.dag.entryAfter ["writeBoundary"] ''
     export HOME=${config.home.homeDirectory}
     export PATH="${config.home.profileDirectory}/bin:$PATH"
-    export MISE_CONFIG_FILE="$HOME/.config/mise/config.toml"
-    ${pkgs.mise}/bin/mise install --yes
+    export CPATH="${config.home.profileDirectory}/include''${CPATH:+:$CPATH}"
+    export LIBRARY_PATH="${config.home.profileDirectory}/lib''${LIBRARY_PATH:+:$LIBRARY_PATH}"
+    export PKG_CONFIG_PATH="${config.home.profileDirectory}/lib/pkgconfig''${PKG_CONFIG_PATH:+:$PKG_CONFIG_PATH}"
+    export NIX_LD="${pkgs.nix-ld}/libexec/nix-ld"
+    export NIX_LD_LIBRARY_PATH="/run/current-system/sw/share/nix-ld/lib"
+    export MISE_GLOBAL_CONFIG_FILE="$HOME/.config/mise/config.toml"
+    export MISE_NODE_GPG_VERIFY=true
+    export MISE_VERBOSE=1
+    running=$(${pkgs.systemd}/bin/systemctl --user list-units --type=service \
+      --state=running --no-legend 'mise-install-*.service' 2>/dev/null || true)
+    if [[ -z $running ]]; then
+      unit="mise-install-$(${pkgs.coreutils}/bin/date +%s)-$$.service"
+      echo "Starting $unit; inspect with systemctl --user status $unit"
+      ${pkgs.coreutils}/bin/timeout --foreground --kill-after=5s 30s \
+        ${pkgs.systemd}/bin/systemd-run --user --no-block --collect \
+        --unit="$unit" --property=Type=oneshot \
+        --property=TimeoutStartSec=30min \
+        --setenv=HOME="$HOME" --setenv=PATH="$PATH" \
+        --setenv=CPATH="$CPATH" --setenv=LIBRARY_PATH="$LIBRARY_PATH" \
+        --setenv=PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
+        --setenv=NIX_LD="$NIX_LD" --setenv=NIX_LD_LIBRARY_PATH="$NIX_LD_LIBRARY_PATH" \
+        --setenv=MISE_GLOBAL_CONFIG_FILE="$MISE_GLOBAL_CONFIG_FILE" \
+        --setenv=MISE_NODE_GPG_VERIFY="$MISE_NODE_GPG_VERIFY" --setenv=MISE_VERBOSE=1 \
+        -- ${pkgs.coreutils}/bin/timeout --foreground --kill-after=30s 30m \
+        ${pkgs.mise}/bin/mise install --yes
+    fi
   '';
 
   # ---------------------------------------------------------------------------

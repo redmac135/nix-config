@@ -27,3 +27,6 @@ jobs:
         run: >-
           nix build -L --no-link
           '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
+      - name: Test mise activation environment
+        if: matrix.configuration == 'onhandwsl'
+        run: ./tests/mise-activation.sh

@@ -77,6 +77,12 @@ git diff --check
 git diff -- packages/external-tools.nix packages/firstmate/lockfiles
 ```
 
+The activation regression test checks the generated user environment and PATH:
+
+```bash
+./tests/mise-activation.sh
+```
+
 The script downloads the published tarball, regenerates its vendored
 `package-lock.json` with scripts disabled, and computes both Nix hashes. A
 failed apply rolls back all files; review and commit the resulting diff
@@ -93,12 +99,27 @@ sudo nixos-rebuild switch --flake .#onhandwsl
 sudo nixos-rebuild switch --flake .#pancakewsl
 ```
 
-Home Manager activation runs `mise install --yes` as `ezhao`, with the global
-config pinned in `MISE_CONFIG_FILE`, after writing
-`~/.config/mise/config.toml`. `programs.nix-ld.enable` supplies the
-linker for mise's upstream Node.js and Python binaries; `python3`, `gcc`,
-`gnumake`, and `pkg-config` are the minimal host/build tools retained for a
-source-build fallback (Node's configure script requires the `python` command).
+Home Manager activation starts a bounded, nonblocking `mise install --yes`
+service as `ezhao`, with the global config pinned in `MISE_GLOBAL_CONFIG_FILE`.
+Each run gets a unique transient unit, so a failed or hung install cannot block
+the next activation; inspect it with `systemctl --user list-units
+'mise-install-*.service'` and `journalctl --user -u mise-install-<timestamp>-<pid>.service`.
+`programs.nix-ld.enable` supplies the linker for mise's upstream Node.js and
+Python binaries. `python3` supplies the `python` configure command, `gcc` and
+`gnumake` compile source fallbacks, `pkg-config` and `zlib.dev` provide build
+metadata and headers, `openssl.dev` provides TLS headers, and `gnupg` verifies
+released tool archives. The global mise config pins Node.js 24; its bundled npm
+is validated by `tests/mise-activation.sh`.
+CI builds both host closures and runs bounded Node.js, npm, and Python mise
+installs on the ARM host path; it cannot execute a real WSL systemd activation.
+If an interrupted rebuild leaves a transient unit loaded, stop it before retrying:
+
+```bash
+systemctl --user stop 'mise-install-*.service' 2>/dev/null || true
+sudo systemctl stop nixos-rebuild-switch-to-configuration.service 2>/dev/null || true
+sudo systemctl reset-failed nixos-rebuild-switch-to-configuration.service
+sudo systemctl daemon-reload
+```
 
 `firstmate.no-mistakes` is a separate Go package. Update its exact release tag,
 source hash, `vendorHash`, and release `ldflags` independently from npm and flake

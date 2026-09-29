@@ -69,9 +69,6 @@
 
   programs.zsh.enable = true;
 
-  # mise downloads upstream Node.js and Python binaries, whose dynamic
-  # linker paths are not known to Nix.  nix-ld supplies the host linker and
-  # common runtime libraries without packaging each mise tool in Nix.
   programs.nix-ld.enable = true;
 
   nix.settings = {
