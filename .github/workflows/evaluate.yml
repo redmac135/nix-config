@@ -27,3 +27,6 @@ jobs:
         run: >-
           nix build -L --no-link
           '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
+      - name: Test manual mise installation
+        if: matrix.configuration == 'onhandwsl'
+        run: ./tests/mise-install.sh

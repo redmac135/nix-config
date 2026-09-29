@@ -24,8 +24,13 @@
     lazydocker
     cloudflared
     esptool
+    python3
     gcc
     gnumake
+    pkg-config
+    zlib.dev
+    openssl.dev
+    gnupg
     mise
     uv
 
@@ -53,7 +58,6 @@
     gh
     jq
     supabase-cli
-    taskwarrior3
 
     # https://github.com/numtide/llm-agents.nix
     llmAgents.codex

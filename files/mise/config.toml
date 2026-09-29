@@ -1,8 +1,12 @@
 [tools]
-node = "lts"
+node = "24"
 pnpm = "latest"
 python = "3.12"
 bun = "latest"
 deno = "latest"
 go = "latest"
 rust = "stable"
+
+[settings]
+node.compile = false
+python.compile = false
