@@ -250,24 +250,8 @@
     export MISE_GLOBAL_CONFIG_FILE="$HOME/.config/mise/config.toml"
     export MISE_NODE_GPG_VERIFY=true
     export MISE_VERBOSE=1
-    running=$(${pkgs.systemd}/bin/systemctl --user list-units --type=service \
-      --state=running --no-legend 'mise-install-*.service' 2>/dev/null || true)
-    if [[ -z $running ]]; then
-      unit="mise-install-$(${pkgs.coreutils}/bin/date +%s)-$$.service"
-      echo "Starting $unit; inspect with systemctl --user status $unit"
-      ${pkgs.coreutils}/bin/timeout --foreground --kill-after=5s 30s \
-        ${pkgs.systemd}/bin/systemd-run --user --no-block --collect \
-        --unit="$unit" --property=Type=oneshot \
-        --property=TimeoutStartSec=30min \
-        --setenv=HOME="$HOME" --setenv=PATH="$PATH" \
-        --setenv=CPATH="$CPATH" --setenv=LIBRARY_PATH="$LIBRARY_PATH" \
-        --setenv=PKG_CONFIG_PATH="$PKG_CONFIG_PATH" \
-        --setenv=NIX_LD="$NIX_LD" --setenv=NIX_LD_LIBRARY_PATH="$NIX_LD_LIBRARY_PATH" \
-        --setenv=MISE_GLOBAL_CONFIG_FILE="$MISE_GLOBAL_CONFIG_FILE" \
-        --setenv=MISE_NODE_GPG_VERIFY="$MISE_NODE_GPG_VERIFY" --setenv=MISE_VERBOSE=1 \
-        -- ${pkgs.coreutils}/bin/timeout --foreground --kill-after=30s 30m \
-        ${pkgs.mise}/bin/mise install --yes
-    fi
+    ${pkgs.coreutils}/bin/timeout --foreground --kill-after=30s 15m \
+      ${pkgs.mise}/bin/mise install --yes
   '';
 
   # ---------------------------------------------------------------------------

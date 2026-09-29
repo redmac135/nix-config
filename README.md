@@ -99,11 +99,10 @@ sudo nixos-rebuild switch --flake .#onhandwsl
 sudo nixos-rebuild switch --flake .#pancakewsl
 ```
 
-Home Manager activation starts a bounded, nonblocking `mise install --yes`
-service as `ezhao`, with the global config pinned in `MISE_GLOBAL_CONFIG_FILE`.
-Each run gets a unique transient unit, so a failed or hung install cannot block
-the next activation; inspect it with `systemctl --user list-units
-'mise-install-*.service'` and `journalctl --user -u mise-install-<timestamp>-<pid>.service`.
+Home Manager activation runs a bounded synchronous `mise install --yes` as
+`ezhao`, with the global config pinned in `MISE_GLOBAL_CONFIG_FILE`. The
+15-minute timeout makes failures visible in the Home Manager journal and lets
+switch report failure instead of returning before installation completes.
 `programs.nix-ld.enable` supplies the linker for mise's upstream Node.js and
 Python binaries. `python3` supplies the `python` configure command, `gcc` and
 `gnumake` compile source fallbacks, `pkg-config` and `zlib.dev` provide build
@@ -115,7 +114,6 @@ installs on the ARM host path; it cannot execute a real WSL systemd activation.
 If an interrupted rebuild leaves a transient unit loaded, stop it before retrying:
 
 ```bash
-systemctl --user stop 'mise-install-*.service' 2>/dev/null || true
 sudo systemctl stop nixos-rebuild-switch-to-configuration.service 2>/dev/null || true
 sudo systemctl reset-failed nixos-rebuild-switch-to-configuration.service
 sudo systemctl daemon-reload

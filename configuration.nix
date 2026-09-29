@@ -69,6 +69,8 @@
 
   programs.zsh.enable = true;
 
+  systemd.services.home-manager-ezhao.serviceConfig.TimeoutStartSec = lib.mkForce "20min";
+
   programs.nix-ld.enable = true;
 
   nix.settings = {
