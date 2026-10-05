@@ -29,3 +29,5 @@ jobs:
           '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
       - name: Test manual mise installation
         run: ./tests/mise-install.sh "${{ matrix.configuration }}"
+      - name: Test Codex daemon package
+        run: ./tests/codex-daemon-package.sh "${{ matrix.configuration }}"
