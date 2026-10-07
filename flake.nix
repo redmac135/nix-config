@@ -56,16 +56,7 @@
               (
                 final: prev:
                   {
-                    llmAgents = let
-                      packages = llm-agents.packages.${prev.stdenv.hostPlatform.system};
-                    in
-                      packages
-                      // {
-                        codex = import ./packages/codex.nix {
-                          pkgs = final;
-                          codex = packages.codex;
-                        };
-                      };
+                    llmAgents = llm-agents.packages.${prev.stdenv.hostPlatform.system};
                     treehouse =
                       treehouse.packages.${prev.stdenv.hostPlatform.system}
                       // {
