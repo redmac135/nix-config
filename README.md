@@ -77,6 +77,14 @@ git diff --check
 git diff -- packages/external-tools.nix packages/firstmate/lockfiles
 ```
 
+The `Update firstmate tools and flake inputs` workflow runs daily at 5:30 AM
+EST and can also be started manually. It runs the combined updater and opens or
+updates a PR against `dev` only when the generated files change:
+
+```bash
+./scripts/update-firstmate-tools-and-flake
+```
+
 The manual-install regression test checks the generated user environment:
 
 ```bash

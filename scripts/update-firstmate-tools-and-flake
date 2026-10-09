@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Update all firstmate npm tools, then refresh the flake lock file.
+set -Eeuo pipefail
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=${FIRSTMATE_UPDATE_REPO_ROOT:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}
+UPDATER=${FIRSTMATE_UPDATE_UPDATER:-$SCRIPT_DIR/update-firstmate-tools}
+NIX_COMMAND=${FIRSTMATE_UPDATE_NIX_COMMAND:-nix}
+
+fail() {
+  echo "update-firstmate-tools-and-flake: $*" >&2
+  exit 1
+}
+
+cd "$REPO_ROOT"
+[[ -f $REPO_ROOT/flake.nix ]] || fail "flake.nix does not exist in $REPO_ROOT"
+[[ -x $UPDATER ]] || fail "firstmate updater is not executable: $UPDATER"
+command -v "$NIX_COMMAND" >/dev/null 2>&1 || fail "Nix is required"
+
+"$UPDATER" --apply --all
+"$NIX_COMMAND" flake update
+git diff --check || fail "generated diff has whitespace errors"
+
+echo "Updated firstmate tools and flake inputs. Review with git diff."
