@@ -22,6 +22,7 @@
     chromium
     lazygit
     lazydocker
+    bubblewrap
     cloudflared
     esptool
     python3
