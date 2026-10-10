@@ -61,9 +61,9 @@ in {
 
     gh-axi = mkNpmTool {
       pname = "gh-axi";
-      version = "0.1.35";
-      tarballHash = "sha256-9yWr5EfJkqPWzA2aYyWGcj7RzxbHlRpAvODHPgkD5q4=";
-      npmDepsHash = "sha256-rcUtzwNmSOKDHf1cLlZ2d/lO+4QS8IMgtmV3lFP6QTA=";
+      version = "0.1.37";
+      tarballHash = "sha256-AAN1NLf1F3OsFDkJ4ccncP5I+CVLkWFEl8gFk1LUA9s=";
+      npmDepsHash = "sha256-xZRe1uoR/BWwrQN/gNMLyJcrggwz01BfqjGO8ltuxSE=";
       lockfile = ./firstmate/lockfiles/gh-axi.package-lock.json;
       description = "Agent ergonomic wrapper around GitHub CLI";
     };
@@ -72,16 +72,16 @@ in {
       pname = "chrome-devtools-axi";
       version = "0.1.39";
       tarballHash = "sha256-J+d4t3ovNEPqUIlr4OMLyPdNXVEwCxvXKR09f8KkrZk=";
-      npmDepsHash = "sha256-HQVMd59dtz21UD0ERF1qv9lbRFbOgYmktfF+1BWSwQE=";
+      npmDepsHash = "sha256-F8OJgUwE9Da0dTrcrJJzxds1gqgR1mp9wfO+/lFm0xo=";
       lockfile = ./firstmate/lockfiles/chrome-devtools-axi.package-lock.json;
       description = "Agent interface for Chrome DevTools";
     };
 
     lavish-axi = mkNpmTool {
       pname = "lavish-axi";
-      version = "0.1.84";
-      tarballHash = "sha256-oOUBSZafu1QSjsXY2AjkzKIj0nsQILBz4p7/oV1xLVQ=";
-      npmDepsHash = "sha256-5GCb8RJtyXBPBuG/xvqyKFAeaDp3YXdhKTutpPOHaKE=";
+      version = "0.1.86";
+      tarballHash = "sha256-xbOVj5/OkxBeFwEnJqCC11RIIXuNcy9iVrTLjM9D2qs=";
+      npmDepsHash = "sha256-YvM/JXQ2GL9JWTx+c/B3WRv+SHTkBUT1V5FNovYD0Uw=";
       lockfile = ./firstmate/lockfiles/lavish-axi.package-lock.json;
       description = "Agent interface for the Lavish editor";
     };
@@ -90,16 +90,16 @@ in {
       pname = "tasks-axi";
       version = "0.2.6";
       tarballHash = "sha256-kzQv5sga9RZpvYonP56ImjY0KISHc8yQe64fcak5Cdk=";
-      npmDepsHash = "sha256-4OpJgUmJePSGviJQBbNK0jXXIQpMd7nSaciGciWAtLQ=";
+      npmDepsHash = "sha256-q3KzjmIyNmg2rtLLhNWb1ClodvYdDch+HjcIiG0tIxU=";
       lockfile = ./firstmate/lockfiles/tasks-axi.package-lock.json;
       description = "Agent interface for task management";
     };
 
     quota-axi = mkNpmTool {
       pname = "quota-axi";
-      version = "0.1.59";
-      tarballHash = "sha256-1w0j4xgPVbAj0s9vkzQ27F05kmxUg0BYpxJRYpW2T14=";
-      npmDepsHash = "sha256-kzTle2l1fRwT8xygCQB6B7cX2bMNNUMSlL6PFQv9ivE=";
+      version = "0.1.60";
+      tarballHash = "sha256-xPteyWKMeLJGhjYwApI0KCDTPI8cTwcOR7TjpayVnkc=";
+      npmDepsHash = "sha256-C1kY9AUjlJ3zxCdPuNAl5p9unwN2yrxXEjy6vGOq+IM=";
       lockfile = ./firstmate/lockfiles/quota-axi.package-lock.json;
       description = "Agent interface for quota tracking";
     };
