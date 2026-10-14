@@ -81,6 +81,17 @@
         ];
       };
   in {
+    packages = nixpkgs.lib.genAttrs systems (system: let
+      pkgs = import nixpkgs {inherit system;};
+    in
+      import ./packages/no-mistakes.nix {
+        inherit pkgs;
+        lib = pkgs.lib;
+      }
+      // {
+        nix-update = pkgs.nix-update;
+      });
+
     nixosConfigurations = {
       onhandwsl = mkNixos "aarch64-linux" "onhandwsl";
       pancakewsl = mkNixos "x86_64-linux" "pancakewsl";

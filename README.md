@@ -77,9 +77,11 @@ git diff --check
 git diff -- packages/npm-packages.nix packages/npm/lockfiles
 ```
 
-The `Update npm packages and flake inputs` workflow runs daily at 5:30 AM
-EST and can also be started manually. It runs the combined updater and opens or
-updates a PR against `dev` only when the generated files change:
+The `Update npm packages, no-mistakes, and flake inputs` workflow runs daily at
+5:30 AM EST and can also be started manually. It runs the combined updater and
+opens or updates a PR against `dev` only when the generated files change. The
+updater refreshes npm packages, the `no-mistakes` release and Go module hash,
+and the flake inputs:
 
 ```bash
 ./scripts/update-npm-packages-and-flake

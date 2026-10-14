@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Update all pinned npm packages, then refresh the flake lock file.
+# Update pinned npm packages, no-mistakes, and flake inputs.
 set -Eeuo pipefail
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
@@ -18,7 +18,10 @@ cd "$REPO_ROOT"
 command -v "$NIX_COMMAND" >/dev/null 2>&1 || fail "Nix is required"
 
 "$UPDATER" --apply --all
+"$NIX_COMMAND" run .#nix-update -- noMistakes --flake \
+  --override-filename packages/no-mistakes.nix \
+  --use-github-releases
 "$NIX_COMMAND" flake update
 git diff --check || fail "generated diff has whitespace errors"
 
-echo "Updated npm packages and flake inputs. Review with git diff."
+echo "Updated npm packages, no-mistakes, and flake inputs. Review with git diff."

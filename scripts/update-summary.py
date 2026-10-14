@@ -25,6 +25,11 @@ def npm_versions(text: str) -> dict[str, str]:
     return versions
 
 
+def no_mistakes_version(text: str) -> dict[str, str]:
+    version = re.search(r'^\s*version = "([^"]+)";', text, re.MULTILINE)
+    return {"no-mistakes": version.group(1)} if version else {}
+
+
 def flake_inputs(text: str) -> dict[str, str]:
     lock = json.loads(text)
     result = {}
@@ -59,6 +64,7 @@ def main() -> None:
             "packages/npm-packages.nix",
             npm_versions,
         ),
+        "no-mistakes": ("packages/no-mistakes.nix", no_mistakes_version),
         "Nix flake inputs": ("flake.lock", flake_inputs),
     }
     sections = ["Automated dependency update summary."]
