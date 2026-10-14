@@ -1,4 +1,4 @@
-name: Update firstmate tools and flake inputs
+name: Update npm packages and flake inputs
 
 on:
   workflow_dispatch:
@@ -29,20 +29,20 @@ jobs:
         with:
           node-version: 22
 
-      - name: Update firstmate tools and flake inputs
-        run: ./scripts/update-firstmate-tools-and-flake
+      - name: Update npm packages and flake inputs
+        run: ./scripts/update-npm-packages-and-flake
 
       - name: Summarize version changes
         id: summary
-        run: python3 scripts/firstmate-update-summary.py HEAD "$RUNNER_TEMP/update-pr-body.md" >> "$GITHUB_OUTPUT"
+        run: python3 scripts/update-summary.py HEAD "$RUNNER_TEMP/update-pr-body.md" >> "$GITHUB_OUTPUT"
 
       - name: Open or update dependency PR
         uses: peter-evans/create-pull-request@v7
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: dev
-          branch: automation/update-firstmate-tools
+          branch: automation/update-npm-packages
           delete-branch: true
-          commit-message: "chore: update firstmate tools and flake inputs"
-          title: "chore: update firstmate tools and flake inputs"
+          commit-message: "chore: update npm packages and flake inputs"
+          title: "chore: update npm packages and flake inputs"
           body-path: ${{ steps.summary.outputs.body_path }}

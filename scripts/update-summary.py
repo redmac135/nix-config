@@ -52,11 +52,11 @@ def entries(before: dict[str, str], after: dict[str, str]) -> list[str]:
 
 def main() -> None:
     if len(sys.argv) != 3:
-        raise SystemExit("usage: firstmate-update-summary.py BASE_REVISION OUTPUT_FILE")
+        raise SystemExit("usage: update-summary.py BASE_REVISION OUTPUT_FILE")
     base, output = sys.argv[1:]
     files = {
-        "Firstmate tools": (
-            "packages/external-tools.nix",
+        "npm packages": (
+            "packages/npm-packages.nix",
             npm_versions,
         ),
         "Nix flake inputs": ("flake.lock", flake_inputs),

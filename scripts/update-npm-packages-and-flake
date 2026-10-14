@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+# Update all pinned npm packages, then refresh the flake lock file.
+set -Eeuo pipefail
+
+SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
+REPO_ROOT=${NPM_PACKAGES_UPDATE_REPO_ROOT:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}
+UPDATER=${NPM_PACKAGES_UPDATE_UPDATER:-$SCRIPT_DIR/update-npm-packages}
+NIX_COMMAND=${NPM_PACKAGES_UPDATE_NIX_COMMAND:-nix}
+
+fail() {
+  echo "update-npm-packages-and-flake: $*" >&2
+  exit 1
+}
+
+cd "$REPO_ROOT"
+[[ -f $REPO_ROOT/flake.nix ]] || fail "flake.nix does not exist in $REPO_ROOT"
+[[ -x $UPDATER ]] || fail "npm package updater is not executable: $UPDATER"
+command -v "$NIX_COMMAND" >/dev/null 2>&1 || fail "Nix is required"
+
+"$UPDATER" --apply --all
+"$NIX_COMMAND" flake update
+git diff --check || fail "generated diff has whitespace errors"
+
+echo "Updated npm packages and flake inputs. Review with git diff."
