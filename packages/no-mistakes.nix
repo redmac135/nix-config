@@ -1,4 +1,7 @@
-{pkgs, lib}: {
+{
+  pkgs,
+  lib,
+}: {
   noMistakes = pkgs.buildGoModule {
     pname = "no-mistakes";
     version = "1.75.2";

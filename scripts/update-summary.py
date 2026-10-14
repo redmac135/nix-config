@@ -18,8 +18,8 @@ def npm_versions(text: str) -> dict[str, str]:
     )
     versions = {}
     for block in blocks:
-        package = re.search(r'^\s*pname = "([^\"]+)";', block, re.M)
-        version = re.search(r'^\s*version = "([^\"]+)";', block, re.M)
+        package = re.search(r'^\s*pname = "([^\"]+)";', block, re.MULTILINE)
+        version = re.search(r'^\s*version = "([^\"]+)";', block, re.MULTILINE)
         if package and version:
             versions[package.group(1)] = version.group(1)
     return versions
