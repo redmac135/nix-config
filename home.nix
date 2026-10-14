@@ -66,6 +66,7 @@ in {
     gh
     jq
     supabase-cli
+    wrangler
 
     # https://github.com/numtide/llm-agents.nix
     llmAgents.codex
