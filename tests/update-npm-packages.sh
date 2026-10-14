@@ -104,23 +104,24 @@ run --preview alpha-axi 1.2.3 > "$requested_preview"
 grep -q 'alpha-axi: 1.2.3' "$requested_preview"
 run --preview chrome-devtools-mcp 1.2.3 > "$requested_preview"
 grep -q 'chrome-devtools-mcp: 1.2.3' "$requested_preview"
-run --apply chrome-devtools-mcp >/dev/null
-grep -q 'version = "9.9.9"' "$fixture/packages/npm-packages.nix"
+run --apply chrome-devtools-mcp > "$requested_preview"
+grep -q 'chrome-devtools-mcp: 9.9.9' "$requested_preview"
 if grep -q old-chrome "$fixture/packages/npm/lockfiles/chrome-devtools-mcp.package-lock.json"; then
   echo "chrome-devtools-mcp apply did not replace its lockfile" >&2; exit 1
 fi
 git -C "$fixture" add . && git -C "$fixture" commit -qm chrome-devtools-mcp
-run --apply alpha-axi >/dev/null
-grep -q 'version = "9.9.9"' "$fixture/packages/npm-packages.nix"
-grep -q 'version = "0.2.0"' "$fixture/packages/npm-packages.nix"
+run --apply alpha-axi > "$requested_preview"
+grep -q 'alpha-axi: 9.9.9' "$requested_preview"
 if grep -q old-alpha "$fixture/packages/npm/lockfiles/alpha-axi.package-lock.json"; then
   echo "single-package apply did not replace its lockfile" >&2; exit 1
 fi
 git -C "$fixture" add . && git -C "$fixture" commit -qm alpha
 run --preview --all >/dev/null
 git -C "$fixture" diff --exit-code
-run --apply --all >/dev/null
-grep -q 'version = "9.9.9"' "$fixture/packages/npm-packages.nix"
+run --apply --all > "$requested_preview"
+grep -q 'alpha-axi: 9.9.9' "$requested_preview"
+grep -q 'beta-axi: 9.9.9' "$requested_preview"
+grep -q 'chrome-devtools-mcp: 9.9.9' "$requested_preview"
 
 # Verify rollback after a write failure.
 git -C "$fixture" add . && git -C "$fixture" commit -qm all
