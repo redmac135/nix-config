@@ -14,6 +14,15 @@
     "$HOME/.local/bin"
   ];
 
+  typescript-language-server-fixed = pkgs.typescript-language-server.overrideAttrs (old: {
+    pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
+      outputHash =
+        if pkgs.stdenv.hostPlatform.isAarch64
+        then "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4="
+        else "sha256-MUSxDMlbG21KSesGdEvqa2kEpuVfLlXRUX1qV/FGsSo=";
+    });
+  });
+
   home.packages = with pkgs; [
     # Core
     git
@@ -41,7 +50,8 @@
     dockerfile-language-server
     yaml-language-server
     svelte-language-server
-    typescript-language-server
+    # typescript-language-server
+    typescript-language-server-fixed
     pyright
     nil # nix LSP
     bash-language-server
