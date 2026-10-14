@@ -67,7 +67,11 @@
                         };
                       };
                   }
-                  // import ./packages/external-tools.nix {
+                  // import ./packages/no-mistakes.nix {
+                    inherit (final) lib;
+                    pkgs = final;
+                  }
+                  // import ./packages/npm-packages.nix {
                     pkgs = final;
                     inherit (final) lib;
                   }

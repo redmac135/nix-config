@@ -18,8 +18,8 @@ def npm_versions(text: str) -> dict[str, str]:
     )
     versions = {}
     for block in blocks:
-        package = re.search(r'^\s*pname = "([^\"]+)";', block, re.M)
-        version = re.search(r'^\s*version = "([^\"]+)";', block, re.M)
+        package = re.search(r'^\s*pname = "([^\"]+)";', block, re.MULTILINE)
+        version = re.search(r'^\s*version = "([^\"]+)";', block, re.MULTILINE)
         if package and version:
             versions[package.group(1)] = version.group(1)
     return versions
@@ -52,11 +52,11 @@ def entries(before: dict[str, str], after: dict[str, str]) -> list[str]:
 
 def main() -> None:
     if len(sys.argv) != 3:
-        raise SystemExit("usage: firstmate-update-summary.py BASE_REVISION OUTPUT_FILE")
+        raise SystemExit("usage: update-summary.py BASE_REVISION OUTPUT_FILE")
     base, output = sys.argv[1:]
     files = {
-        "Firstmate tools": (
-            "packages/external-tools.nix",
+        "npm packages": (
+            "packages/npm-packages.nix",
             npm_versions,
         ),
         "Nix flake inputs": ("flake.lock", flake_inputs),

@@ -3,23 +3,23 @@
 set -Eeuo pipefail
 
 SCRIPT_DIR=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-REPO_ROOT=${FIRSTMATE_UPDATE_REPO_ROOT:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}
-TOOLS_FILE=${FIRSTMATE_UPDATE_TOOLS_FILE:-$REPO_ROOT/packages/external-tools.nix}
-LOCK_DIR=${FIRSTMATE_UPDATE_LOCK_DIR:-$REPO_ROOT/packages/firstmate/lockfiles}
+REPO_ROOT=${NPM_PACKAGES_UPDATE_REPO_ROOT:-$(CDPATH= cd -- "$SCRIPT_DIR/.." && pwd)}
+TOOLS_FILE=${NPM_PACKAGES_UPDATE_TOOLS_FILE:-$REPO_ROOT/packages/npm-packages.nix}
+LOCK_DIR=${NPM_PACKAGES_UPDATE_LOCK_DIR:-$REPO_ROOT/packages/npm/lockfiles}
 
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/update-firstmate-tools --preview [--all|PACKAGE [VERSION]]
-  scripts/update-firstmate-tools --apply   [--all|PACKAGE [VERSION]]
+  scripts/update-npm-packages --preview [--all|PACKAGE [VERSION]]
+  scripts/update-npm-packages --apply   [--all|PACKAGE [VERSION]]
 
 Without VERSION, npm's current latest release is selected.  --all is opt-in
-and updates every *-axi package declared in packages/external-tools.nix.
+and updates every npm package declared in packages/npm-packages.nix.
 EOF
 }
 
 fail() {
-  echo "update-firstmate-tools: $*" >&2
+  echo "update-npm-packages: $*" >&2
   exit 1
 }
 
@@ -82,13 +82,8 @@ mapfile -t declared < <(awk '
 ' "$TOOLS_FILE")
 ((${#declared[@]})) || fail "no mkNpmTool packages found in $TOOLS_FILE"
 
-# Limit updates to declared -axi packages.
-packages=()
-for package in "${declared[@]}"; do
-  [[ $package == *-axi ]] || continue
-  packages+=("$package")
-done
-((${#packages[@]})) || fail "no -axi npm packages found in $TOOLS_FILE"
+packages=("${declared[@]}")
+((${#packages[@]})) || fail "no npm packages found in $TOOLS_FILE"
 
 contains_package() {
   local wanted=$1 package
@@ -105,7 +100,7 @@ if ((all)); then
 else
   package=${positional[0]:-}
   [[ -n $package ]] || fail "PACKAGE is required unless --all is used"
-  contains_package "$package" || fail "package is not declared by external-tools.nix: $package"
+  contains_package "$package" || fail "package is not declared by npm-packages.nix: $package"
   selected=("$package")
   requested_version=${positional[1]:-}
 fi
@@ -116,8 +111,8 @@ command -v tar >/dev/null 2>&1 || fail "tar is required"
 
 hash_file() {
   local url=$1 output hash
-  if [[ -n ${FIRSTMATE_UPDATE_TARBALL_HASH_CMD:-} ]]; then
-    output=$("$FIRSTMATE_UPDATE_TARBALL_HASH_CMD" "$url")
+  if [[ -n ${NPM_PACKAGES_UPDATE_TARBALL_HASH_CMD:-} ]]; then
+    output=$("$NPM_PACKAGES_UPDATE_TARBALL_HASH_CMD" "$url")
   else
     command -v nix >/dev/null 2>&1 || fail "nix is required to hash tarballs"
     output=$(nix store prefetch-file --json --hash-type sha256 "$url")
@@ -134,8 +129,8 @@ except json.JSONDecodeError:
 
 npm_deps_hash() {
   local lock=$1 output hash
-  if [[ -n ${FIRSTMATE_UPDATE_NPM_DEPS_HASH_CMD:-} ]]; then
-    output=$("$FIRSTMATE_UPDATE_NPM_DEPS_HASH_CMD" "$lock")
+  if [[ -n ${NPM_PACKAGES_UPDATE_NPM_DEPS_HASH_CMD:-} ]]; then
+    output=$("$NPM_PACKAGES_UPDATE_NPM_DEPS_HASH_CMD" "$lock")
   else
     command -v nix >/dev/null 2>&1 || fail "nix is required to hash npm dependencies"
     output=$(nix run nixpkgs#prefetch-npm-deps -- "$lock" 2>&1)
@@ -145,10 +140,10 @@ npm_deps_hash() {
   printf '%s' "$hash"
 }
 
-workdir=$(mktemp -d "${TMPDIR:-/tmp}/update-firstmate-tools.XXXXXX")
+workdir=$(mktemp -d "${TMPDIR:-/tmp}/update-npm-packages.XXXXXX")
 cleanup() { rm -rf "$workdir"; }
 trap cleanup EXIT
-staged_tools=$workdir/external-tools.nix
+staged_tools=$workdir/npm-packages.nix
 cp "$TOOLS_FILE" "$staged_tools"
 updates=$workdir/updates.tsv
 : > "$updates"
@@ -233,7 +228,7 @@ fi
 # Apply generated files transactionally.
 backup=$workdir/backup
 mkdir -p "$backup"
-cp "$TOOLS_FILE" "$backup/external-tools.nix"
+cp "$TOOLS_FILE" "$backup/npm-packages.nix"
 for package in "${selected[@]}"; do
   cp "$LOCK_DIR/$package.package-lock.json" "$backup/$package.package-lock.json"
 done
@@ -242,11 +237,11 @@ transaction_done=0
 rollback() {
   local status=$?
   if ((transaction_started && !transaction_done)); then
-    cp "$backup/external-tools.nix" "$TOOLS_FILE" || true
+    cp "$backup/npm-packages.nix" "$TOOLS_FILE" || true
     for package in "${selected[@]}"; do
       cp "$backup/$package.package-lock.json" "$LOCK_DIR/$package.package-lock.json" || true
     done
-    echo "update-firstmate-tools: transaction rolled back" >&2
+    echo "update-npm-packages: transaction rolled back" >&2
   fi
   cleanup
   return "$status"
@@ -257,11 +252,11 @@ cp "$staged_tools" "$TOOLS_FILE"
 for package in "${selected[@]}"; do
   cp "$workdir/$package.package-lock.json" "$LOCK_DIR/$package.package-lock.json"
 done
-if [[ ${FIRSTMATE_UPDATE_TEST_FAIL_AFTER:-0} == 1 ]]; then
+if [[ ${NPM_PACKAGES_UPDATE_TEST_FAIL_AFTER:-0} == 1 ]]; then
   fail "test failure after transaction writes"
 fi
 git diff --check || fail "generated diff has whitespace errors"
 transaction_done=1
 trap - EXIT
 cleanup
-printf 'Applied %s update(s). Review with: git diff -- packages/external-tools.nix packages/firstmate/lockfiles\n' "${#selected[@]}"
+printf 'Applied %s update(s). Review with: git diff -- packages/npm-packages.nix packages/npm/lockfiles\n' "${#selected[@]}"

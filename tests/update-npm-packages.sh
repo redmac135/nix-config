@@ -2,17 +2,17 @@
 set -Eeuo pipefail
 
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
-fixture=$(mktemp -d "${TMPDIR:-/tmp}/update-firstmate-tools-test.XXXXXX")
-requested_preview=$(mktemp "${TMPDIR:-/tmp}/update-firstmate-tools-requested.XXXXXX")
+fixture=$(mktemp -d "${TMPDIR:-/tmp}/update-npm-packages-test.XXXXXX")
+requested_preview=$(mktemp "${TMPDIR:-/tmp}/update-npm-packages-requested.XXXXXX")
 trap 'rm -rf "$fixture" "$requested_preview"' EXIT
-mkdir -p "$fixture/scripts" "$fixture/packages/firstmate/lockfiles" "$fixture/bin"
-cp "$ROOT/scripts/update-firstmate-tools" "$fixture/scripts/"
-cat > "$fixture/packages/external-tools.nix" <<'EOF'
+mkdir -p "$fixture/scripts" "$fixture/packages/npm/lockfiles" "$fixture/bin"
+cp "$ROOT/scripts/update-npm-packages" "$fixture/scripts/"
+cat > "$fixture/packages/npm-packages.nix" <<'EOF'
 { pkgs, lib }:
 let
   mkNpmTool = { pname, version, tarballHash, npmDepsHash, lockfile, description }: pkgs.buildNpmPackage {};
 in {
-  firstmate = {
+  npmPkgs = {
     alpha-axi = mkNpmTool {
       pname = "alpha-axi";
       version = "0.1.0";
@@ -29,11 +29,20 @@ in {
       lockfile = ./beta;
       description = "beta";
     };
+    chrome-devtools-mcp = mkNpmTool {
+      pname = "chrome-devtools-mcp";
+      version = "0.3.0";
+      tarballHash = "sha256-old-chrome";
+      npmDepsHash = "sha256-old-deps-chrome";
+      lockfile = ./chrome;
+      description = "Chrome DevTools MCP";
+    };
   };
 }
 EOF
-printf '{"version":"old-alpha"}\n' > "$fixture/packages/firstmate/lockfiles/alpha-axi.package-lock.json"
-printf '{"version":"old-beta"}\n' > "$fixture/packages/firstmate/lockfiles/beta-axi.package-lock.json"
+printf '{"version":"old-alpha"}\n' > "$fixture/packages/npm/lockfiles/alpha-axi.package-lock.json"
+printf '{"version":"old-beta"}\n' > "$fixture/packages/npm/lockfiles/beta-axi.package-lock.json"
+printf '{"version":"old-chrome"}\n' > "$fixture/packages/npm/lockfiles/chrome-devtools-mcp.package-lock.json"
 cat > "$fixture/bin/npm" <<'EOF'
 #!/usr/bin/env bash
 set -Eeuo pipefail
@@ -60,7 +69,7 @@ cat > "$fixture/bin/deps-hash" <<'EOF'
 #!/usr/bin/env bash
 echo sha256-new-deps
 EOF
-chmod +x "$fixture/bin"/* "$fixture/scripts/update-firstmate-tools"
+chmod +x "$fixture/bin"/* "$fixture/scripts/update-npm-packages"
 
 git -C "$fixture" init -q
 git -C "$fixture" config user.email test@example.invalid
@@ -70,12 +79,12 @@ git -C "$fixture" commit -qm initial
 
 run() {
   env PATH="$fixture/bin:$PATH" \
-    FIRSTMATE_UPDATE_REPO_ROOT="$fixture" \
-    FIRSTMATE_UPDATE_TOOLS_FILE="$fixture/packages/external-tools.nix" \
-    FIRSTMATE_UPDATE_LOCK_DIR="$fixture/packages/firstmate/lockfiles" \
-    FIRSTMATE_UPDATE_TARBALL_HASH_CMD="$fixture/bin/tarball-hash" \
-    FIRSTMATE_UPDATE_NPM_DEPS_HASH_CMD="$fixture/bin/deps-hash" \
-    "$fixture/scripts/update-firstmate-tools" "$@"
+    NPM_PACKAGES_UPDATE_REPO_ROOT="$fixture" \
+    NPM_PACKAGES_UPDATE_TOOLS_FILE="$fixture/packages/npm-packages.nix" \
+    NPM_PACKAGES_UPDATE_LOCK_DIR="$fixture/packages/npm/lockfiles" \
+    NPM_PACKAGES_UPDATE_TARBALL_HASH_CMD="$fixture/bin/tarball-hash" \
+    NPM_PACKAGES_UPDATE_NPM_DEPS_HASH_CMD="$fixture/bin/deps-hash" \
+    "$fixture/scripts/update-npm-packages" "$@"
 }
 
 if run alpha-axi >/dev/null 2>&1; then
@@ -93,27 +102,36 @@ run --preview alpha-axi >/dev/null
 git -C "$fixture" diff --exit-code
 run --preview alpha-axi 1.2.3 > "$requested_preview"
 grep -q 'alpha-axi: 1.2.3' "$requested_preview"
-run --apply alpha-axi >/dev/null
-grep -q 'version = "9.9.9"' "$fixture/packages/external-tools.nix"
-grep -q 'version = "0.2.0"' "$fixture/packages/external-tools.nix"
-if grep -q old-alpha "$fixture/packages/firstmate/lockfiles/alpha-axi.package-lock.json"; then
+run --preview chrome-devtools-mcp 1.2.3 > "$requested_preview"
+grep -q 'chrome-devtools-mcp: 1.2.3' "$requested_preview"
+run --apply chrome-devtools-mcp > "$requested_preview"
+grep -q 'chrome-devtools-mcp: 9.9.9' "$requested_preview"
+if grep -q old-chrome "$fixture/packages/npm/lockfiles/chrome-devtools-mcp.package-lock.json"; then
+  echo "chrome-devtools-mcp apply did not replace its lockfile" >&2; exit 1
+fi
+git -C "$fixture" add . && git -C "$fixture" commit -qm chrome-devtools-mcp
+run --apply alpha-axi > "$requested_preview"
+grep -q 'alpha-axi: 9.9.9' "$requested_preview"
+if grep -q old-alpha "$fixture/packages/npm/lockfiles/alpha-axi.package-lock.json"; then
   echo "single-package apply did not replace its lockfile" >&2; exit 1
 fi
 git -C "$fixture" add . && git -C "$fixture" commit -qm alpha
 run --preview --all >/dev/null
 git -C "$fixture" diff --exit-code
-run --apply --all >/dev/null
-grep -q 'version = "9.9.9"' "$fixture/packages/external-tools.nix"
+run --apply --all > "$requested_preview"
+grep -q 'alpha-axi: 9.9.9' "$requested_preview"
+grep -q 'beta-axi: 9.9.9' "$requested_preview"
+grep -q 'chrome-devtools-mcp: 9.9.9' "$requested_preview"
 
 # Verify rollback after a write failure.
 git -C "$fixture" add . && git -C "$fixture" commit -qm all
-before_tools=$(sha256sum "$fixture/packages/external-tools.nix")
-before_lock=$(sha256sum "$fixture/packages/firstmate/lockfiles/alpha-axi.package-lock.json")
-if FIRSTMATE_UPDATE_TEST_FAIL_AFTER=1 run --apply alpha-axi >/dev/null 2>&1; then
+before_tools=$(sha256sum "$fixture/packages/npm-packages.nix")
+before_lock=$(sha256sum "$fixture/packages/npm/lockfiles/alpha-axi.package-lock.json")
+if NPM_PACKAGES_UPDATE_TEST_FAIL_AFTER=1 run --apply alpha-axi >/dev/null 2>&1; then
   echo "rollback failure hook unexpectedly succeeded" >&2; exit 1
 fi
-[[ $before_tools == "$(sha256sum "$fixture/packages/external-tools.nix")" ]]
-[[ $before_lock == "$(sha256sum "$fixture/packages/firstmate/lockfiles/alpha-axi.package-lock.json")" ]]
+[[ $before_tools == "$(sha256sum "$fixture/packages/npm-packages.nix")" ]]
+[[ $before_lock == "$(sha256sum "$fixture/packages/npm/lockfiles/alpha-axi.package-lock.json")" ]]
 git -C "$fixture" diff --exit-code
 
-echo 'update-firstmate-tools tests passed'
+echo 'update-npm-packages tests passed'
