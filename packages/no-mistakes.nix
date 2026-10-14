@@ -3,7 +3,7 @@
   lib,
 }: {
   noMistakes = let
-    version = "1.75.2";
+    version = "1.84.0";
   in
     pkgs.buildGoModule {
       pname = "no-mistakes";
@@ -12,9 +12,9 @@
         owner = "kunchenguid";
         repo = "no-mistakes";
         rev = "v${version}";
-        hash = "sha256-57JRCgx08AtYDPBrMpIXWTtNyhrP/+/BIYNKcSjIthU=";
+        hash = "sha256-ne+JfVfV0jjMldqyv25KTwrdexFs5ynFAGWgILiGPAk=";
       };
-      vendorHash = "sha256-NZOYxNYvt4192uqKBdKRxdgrKFvWx3585psdCnRdPSM=";
+      vendorHash = "sha256-maAVBptEtdrGanJHwAPAmuGBorzIMUgK6T+NmIz1kS0=";
       subPackages = ["cmd/no-mistakes"];
       ldflags = [
         "-X github.com/kunchenguid/no-mistakes/internal/buildinfo.Version=v${version}"
