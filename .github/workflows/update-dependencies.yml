@@ -1,4 +1,4 @@
-name: Update npm packages and flake inputs
+name: Update npm packages, no-mistakes, and flake inputs
 
 on:
   workflow_dispatch:
@@ -29,7 +29,7 @@ jobs:
         with:
           node-version: 22
 
-      - name: Update npm packages and flake inputs
+      - name: Update npm packages, no-mistakes, and flake inputs
         run: ./scripts/update-npm-packages-and-flake
 
       - name: Summarize version changes
@@ -43,6 +43,6 @@ jobs:
           base: dev
           branch: automation/update-npm-packages
           delete-branch: true
-          commit-message: "chore: update npm packages and flake inputs"
-          title: "chore: update npm packages and flake inputs"
+          commit-message: "chore: update pinned dependencies"
+          title: "chore: update pinned dependencies"
           body-path: ${{ steps.summary.outputs.body_path }}

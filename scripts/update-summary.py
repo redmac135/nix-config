@@ -13,9 +13,7 @@ def git_file(revision: str, name: str) -> str:
 
 
 def npm_versions(text: str) -> dict[str, str]:
-    blocks = re.findall(
-        r"(?ms)^\s*[A-Za-z0-9_-]+ = mkNpmTool \{(.*?)^\s*};", text
-    )
+    blocks = re.findall(r"(?ms)^\s*[A-Za-z0-9_-]+ = mkNpmTool \{(.*?)^\s*};", text)
     versions = {}
     for block in blocks:
         package = re.search(r'^\s*pname = "([^\"]+)";', block, re.MULTILINE)
@@ -23,6 +21,11 @@ def npm_versions(text: str) -> dict[str, str]:
         if package and version:
             versions[package.group(1)] = version.group(1)
     return versions
+
+
+def no_mistakes_version(text: str) -> dict[str, str]:
+    version = re.search(r'^\s*version = "([^"]+)";', text, re.MULTILINE)
+    return {"no-mistakes": version.group(1)} if version else {}
 
 
 def flake_inputs(text: str) -> dict[str, str]:
@@ -59,6 +62,7 @@ def main() -> None:
             "packages/npm-packages.nix",
             npm_versions,
         ),
+        "no-mistakes": ("packages/no-mistakes.nix", no_mistakes_version),
         "Nix flake inputs": ("flake.lock", flake_inputs),
     }
     sections = ["Automated dependency update summary."]
