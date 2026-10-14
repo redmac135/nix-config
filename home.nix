@@ -78,6 +78,7 @@ in {
     firstmate.no-mistakes
     firstmate.gh-axi
     firstmate.chrome-devtools-axi
+    pkgs.chrome-devtools-mcp
     firstmate.lavish-axi
     firstmate.tasks-axi
     firstmate.quota-axi
