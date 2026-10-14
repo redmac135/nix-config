@@ -13,9 +13,7 @@ def git_file(revision: str, name: str) -> str:
 
 
 def npm_versions(text: str) -> dict[str, str]:
-    blocks = re.findall(
-        r"(?ms)^\s*[A-Za-z0-9_-]+ = mkNpmTool \{(.*?)^\s*};", text
-    )
+    blocks = re.findall(r"(?ms)^\s*[A-Za-z0-9_-]+ = mkNpmTool \{(.*?)^\s*};", text)
     versions = {}
     for block in blocks:
         package = re.search(r'^\s*pname = "([^\"]+)";', block, re.MULTILINE)

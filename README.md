@@ -129,9 +129,9 @@ sudo systemctl reset-failed nixos-rebuild-switch-to-configuration.service
 sudo systemctl daemon-reload
 ```
 
-`noMistakes` is a separate Go package. Update its exact release tag,
-source hash, `vendorHash`, and release `ldflags` independently from npm and flake
-input updates.
+`noMistakes` is packaged separately from the npm tools. The combined updater
+above refreshes its release and Go module hashes; review those changes in
+`packages/no-mistakes.nix`.
 
 ## Pi MCP configuration boundary
 
