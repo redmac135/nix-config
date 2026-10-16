@@ -4,6 +4,10 @@ This file is the project's committed home for project-intrinsic agent knowledge:
 
 - Add durable project-specific notes here as they are discovered through real work.
 
+## Repository scope
+
+This is a Nix-only repository: do not add JavaScript code or dependencies, or configure project-local Prettier/ESLint checks.
+
 ## Updating flake inputs
 
 Update one input per PR with `nix flake update <input>`, review `flake.lock`, and build the native no-link closure before pushing; `.github/workflows/evaluate.yml` gates both native host closures. An `llm-agents` update can change Pi, Herdr, and OpenCode together, so inspect all three selected versions.
