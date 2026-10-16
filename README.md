@@ -133,6 +133,33 @@ sudo systemctl daemon-reload
 above refreshes its release and Go module hashes; review those changes in
 `packages/no-mistakes.nix`.
 
+## Agent instructions
+
+Home Manager exposes the shared `files/AGENTS.md` to all three agents without
+copying it into project repositories:
+
+- Claude Code imports `~/.AGENTS.md` from the user-level
+  `~/.claude/CLAUDE.md`. A NixOS-managed setting selects
+  `claude-md-and-agents-md`, so project `AGENTS.md` files load alongside
+  project `CLAUDE.md` files instead of being silently skipped.
+- Codex loads `~/.codex/AGENTS.md` as global guidance and combines it with
+  project `AGENTS.md` files.
+- Pi loads `~/.pi/agent/AGENTS.md` as user context alongside context files in
+  the working directory and its parents.
+
+Each tool uses its native instruction discovery, so project guidance remains
+intact and later/more specific project instructions remain in the chain. No
+project `AGENTS.md` is edited or duplicated. Claude Code v2.1.285 or later,
+with its built-in AGENTS.md support enabled, is required to combine project
+`AGENTS.md` and `CLAUDE.md`; older releases may not honor the managed setting.
+Rebuild and switch the NixOS host (which activates integrated Home Manager),
+then start new agent sessions. If `CODEX_HOME` or `PI_CODING_AGENT_DIR` is
+customized, put the global instruction file in that configured directory too.
+
+Sources: [Claude Code memory and instruction files](https://docs.anthropic.com/en/docs/claude-code/memory),
+[Codex AGENTS.md discovery](https://developers.openai.com/codex/guides/agents-md),
+and [Pi v1.2.0 configuration](https://github.com/earendil-works/pi/blob/v1.2.0/packages/coding-agent/docs/configuration.md).
+
 ## Pi MCP configuration boundary
 
 This flake installs Pi, but it does not own Pi's mutable package or MCP files.

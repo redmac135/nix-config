@@ -27,5 +27,7 @@ jobs:
         run: >-
           nix build -L --no-link
           '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
+      - name: Test agent instruction configuration
+        run: ./tests/agent-instructions.sh "${{ matrix.configuration }}"
       - name: Test manual mise installation
         run: ./tests/mise-install.sh "${{ matrix.configuration }}"
