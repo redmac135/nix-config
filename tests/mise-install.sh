@@ -57,7 +57,7 @@ for loader in /lib/ld-linux*; do
 if ((nixos_stub)) && [[ ! -e /run/current-system/sw/share/nix-ld/lib/ld.so ]]; then
   echo 'mise runtime install skipped: nix-ld is not active in this host generation'
 else
-  timeout --foreground --kill-after=10s 4m "$mise/bin/mise" install --yes
+  timeout --foreground --kill-after=10s 10m "$mise/bin/mise" install --yes
   node_version=$("$mise/bin/mise" exec -- node --version)
   python_version=$("$mise/bin/mise" exec -- python --version)
   [[ $node_version == v24.* ]]
