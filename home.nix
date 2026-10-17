@@ -254,5 +254,7 @@ in {
 
   xdg.configFile."mise/config.toml".source = ./files/mise/config.toml;
   home.file.".AGENTS.md".source = ./files/AGENTS.md;
-  home.file.".CLAUDE.md".source = ./files/AGENTS.md;
+  home.file.".claude/CLAUDE.md".text = "@~/.AGENTS.md\n";
+  home.file.".codex/AGENTS.md".source = ./files/AGENTS.md;
+  home.file.".pi/agent/AGENTS.md".source = ./files/AGENTS.md;
 }

@@ -6,6 +6,15 @@
 }: {
   nixpkgs.config.allowUnfreePredicate = pkg: lib.getName pkg == "copilot-language-server";
 
+  # Load repository AGENTS.md files even when a project also has CLAUDE.md.
+  environment.etc."claude-code/managed-settings.json".text = builtins.toJSON {
+    pluginConfigs = {
+      "cc-plugin-agents-md@builtin" = {
+        options.instructionFiles = "claude-md-and-agents-md";
+      };
+    };
+  };
+
   wsl.enable = true;
   wsl.defaultUser = "ezhao";
 
