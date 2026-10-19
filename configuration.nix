@@ -80,7 +80,10 @@
 
   programs.nix-ld = {
     enable = true;
-    libraries = [pkgs.glib];
+    libraries = [
+      pkgs.glib
+      pkgs.nspr
+    ];
   };
 
   nix.settings = {
