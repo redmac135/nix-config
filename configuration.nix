@@ -78,7 +78,10 @@
 
   programs.zsh.enable = true;
 
-  programs.nix-ld.enable = true;
+  programs.nix-ld = {
+    enable = true;
+    libraries = [pkgs.glib];
+  };
 
   nix.settings = {
     experimental-features = [
