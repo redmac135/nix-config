@@ -1,8 +1,11 @@
 {
+  lib,
   config,
   pkgs,
   ...
 }: let
+  herdr = pkgs.llmAgents.herdr;
+  piAgent = pkgs.llmAgents.pi.override {useBun = false;};
   typescript-language-server-fixed = pkgs.typescript-language-server.overrideAttrs (old: {
     pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
       outputHash = "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4=";
@@ -71,8 +74,8 @@ in {
     # https://github.com/numtide/llm-agents.nix
     llmAgents.codex
     llmAgents.opencode
-    llmAgents.herdr
-    (llmAgents.pi.override {useBun = false;})
+    herdr
+    piAgent
 
     # kunchenguid
     treehouse.default
@@ -257,4 +260,25 @@ in {
   home.file.".claude/CLAUDE.md".text = "@~/.AGENTS.md\n";
   home.file.".codex/AGENTS.md".source = ./files/AGENTS.md;
   home.file.".pi/agent/AGENTS.md".source = ./files/AGENTS.md;
+
+  home.activation.installAgentExtensions = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if ! ${herdr}/bin/herdr integration status | ${pkgs.gnugrep}/bin/grep -Fq 'pi: current'; then
+      run ${herdr}/bin/herdr integration install pi
+    fi
+
+    pi_agent_dir="''${PI_CODING_AGENT_DIR:-$HOME/.pi/agent}"
+    pi_settings="$pi_agent_dir/settings.json"
+    if ! ${pkgs.jq}/bin/jq -e --arg packageName '@ygncode/pi-web' '
+      any(.packages[]?;
+        if type == "string" then
+          . == ("npm:" + $packageName) or startswith("npm:" + $packageName + "@")
+        else
+          (.source // "") as $source |
+          $source == ("npm:" + $packageName) or ($source | startswith("npm:" + $packageName + "@"))
+        end
+      )
+    ' "$pi_settings" >/dev/null 2>&1; then
+      run ${piAgent}/bin/pi install npm:@ygncode/pi-web@beta
+    fi
+  '';
 }

@@ -160,15 +160,16 @@ Sources: [Claude Code memory and instruction files](https://docs.anthropic.com/e
 [Codex AGENTS.md discovery](https://developers.openai.com/codex/guides/agents-md),
 and [Pi v1.2.0 configuration](https://github.com/earendil-works/pi/blob/v1.2.0/packages/coding-agent/docs/configuration.md).
 
-## Pi MCP configuration boundary
+## Pi configuration boundary
 
-This flake installs Pi, but it does not own Pi's mutable package or MCP files.
-Pi packages remain in `~/.pi/agent/settings.json`, while the Pi MCP adapter's
-global server overrides remain in `~/.pi/agent/mcp.json`. OAuth credentials are
-stored separately by the adapter in the operating system credential store.
-Home Manager must not declare either JSON file without first migrating all of
-its existing entries, because doing so would replace manually managed packages
-or MCP servers.
+Home Manager installs Herdr's Pi lifecycle integration and the configured
+`pi-web` package through their supported install commands. Pi records package
+sources in `~/.pi/agent/settings.json`; the activation checks for `pi-web`
+before installing it and leaves other package entries intact. The Pi MCP
+adapter's global server overrides remain in `~/.pi/agent/mcp.json`, and OAuth
+credentials are stored separately by the adapter in the operating system
+credential store. Home Manager does not declare either JSON file, so existing
+manually managed packages and MCP servers are preserved.
 
 To add Supabase outside this repository, first install the MCP adapter with
 `pi install npm:pi-mcp-adapter` if needed, then merge this server into the

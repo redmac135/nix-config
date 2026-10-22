@@ -1,11 +1,8 @@
 # Additional Installs
 
-I hope this file doesn't grow too much. Here I add additional commands to run to install some misc tools that I think are better served to be run when required.
+This file lists optional tools that are installed manually when needed.
 
-## pi-web
+## Pi extensions
 
-https://github.com/ygncode/pi-web
-
-```bash
-pi install npm:@ygncode/pi-web@beta
-```
+Home Manager installs the configured `pi-web` extension and Herdr's Pi
+integration during activation. See `home.nix` for the managed install sources.
