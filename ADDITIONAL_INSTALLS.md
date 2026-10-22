@@ -1,11 +1,8 @@
 # Additional Installs
 
-I hope this file doesn't grow too much. Here I add additional commands to run to install some misc tools that I think are better served to be run when required.
+This file lists optional tools that are installed manually when needed.
 
-## pi-web
+## Pi extensions
 
-https://github.com/ygncode/pi-web
-
-```bash
-pi install npm:@ygncode/pi-web@beta
-```
+See the [Pi configuration boundary](README.md#pi-configuration-boundary) for
+the Home Manager-managed Pi setup.
