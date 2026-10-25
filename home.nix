@@ -18,6 +18,7 @@ in {
 
   home.sessionVariables = {
     BROWSER = "explorer.exe";
+    CHROME_DEVTOOLS_AXI_EXECUTABLE_PATH = "${pkgs.chromium}/bin/chromium";
   };
   home.sessionPath = [
     "$HOME/.local/bin"
