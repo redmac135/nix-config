@@ -1,0 +1,9 @@
+# Copy this file to %USERPROFILE%\\.wslconfig and customize as needed.
+# These settings apply to all WSL 2 distributions on this Windows machine.
+[wsl2]
+localhostForwarding=true
+
+# Optional resource limits. Uncomment and adjust for this machine:
+# memory=8GB
+# processors=4
+# swap=4GB

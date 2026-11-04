@@ -26,6 +26,47 @@ sudo nixos-rebuild switch --flake .#onhandwsl
 sudo nixos-rebuild switch --flake .#pancakewsl
 ```
 
+## Windows WezTerm and WSL
+
+The tracked Windows templates are in `files/windows/`. They preserve the
+current WezTerm setup: it opens the `WSL:NixOS` domain, starts in the WSL
+`HOME`, and uses FiraCode Nerd Font with Catppuccin Mocha.
+
+Install the WezTerm configuration from PowerShell by copying it to the Windows
+user profile (the destination is `%USERPROFILE%\\.wezterm.lua`):
+
+```powershell
+Copy-Item .\\files\\windows\\.wezterm.lua $env:USERPROFILE\\.wezterm.lua
+```
+
+To keep it linked to this checkout instead, create a symbolic link from the
+same destination. Run PowerShell with the permissions required for symlinks:
+
+```powershell
+New-Item -ItemType SymbolicLink `
+  -Path $env:USERPROFILE\\.wezterm.lua `
+  -Target (Resolve-Path .\\files\\windows\\.wezterm.lua)
+```
+
+Copy the WSL template to `%USERPROFILE%\\.wslconfig`:
+
+```powershell
+Copy-Item .\\files\\windows\\.wslconfig $env:USERPROFILE\\.wslconfig
+```
+
+After changing `.wslconfig`, restart WSL so it is re-read:
+
+```powershell
+wsl --shutdown
+```
+
+The template only enables localhost forwarding by default. The commented
+`memory`, `processors`, and `swap` settings are optional machine-specific
+limits; uncomment and adjust them for the Windows host. Ensure the WSL
+installation is named `NixOS` (or change `config.default_domain` in the
+WezTerm file to match it). The `HOME` working directory is resolved inside
+WSL, not from a private Windows path.
+
 ## GitHub Copilot in Neovim
 
 The Neovim configuration includes GitHub Copilot inline suggestions and
