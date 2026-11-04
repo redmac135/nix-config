@@ -59,6 +59,7 @@ in {
     clang-tools # provides clangd and clang-format
     cmake-language-server
     rust-analyzer
+    sqls
 
     # Formatters & Linters
     ruff # replaces black + python linter
@@ -165,6 +166,7 @@ in {
           p.nix
           p.python
           p.rust
+          p.sql
           p.svelte
           p.typescript
           p.yaml

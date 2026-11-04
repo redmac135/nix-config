@@ -28,6 +28,7 @@ vim.lsp.enable({
 	"nil_ls",
 	"pyright",
 	"rust_analyzer",
+	"sqls",
 	"svelte",
 	"ts_ls",
 	"yamlls",
