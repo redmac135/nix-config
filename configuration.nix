@@ -50,7 +50,13 @@
     };
   };
 
-  services.tailscale.enable = true;
+  services.tailscale = {
+    enable = true;
+
+    # Tailscale SSH handles SSH on the Tailscale interface. Access is still
+    # limited by the tailnet policy documented in README.md.
+    extraSetFlags = ["--ssh"];
+  };
 
   # NixOS owns the Cloudflare Tunnel service; `cloudflared service install`
   # cannot write /etc/systemd/system on an immutable NixOS system.
