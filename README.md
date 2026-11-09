@@ -28,29 +28,6 @@ sudo nixos-rebuild switch --flake .#pancakewsl
 
 ## Tailscale SSH
 
-NixOS enables Tailscale SSH with `services.tailscale.extraSetFlags = ["--ssh"]`.
-Tailscale takes over port 22 only for connections arriving through the
-Tailscale interface; ordinary OpenSSH remains available with the existing
-public keys. Password and keyboard-interactive authentication remain disabled.
-
-The tailnet policy must authorize only the existing `ezhao` account. Add an
-SSH rule like this to the tailnet policy, replacing `<source>` with the
-specific tailnet user or group that should connect:
-
-```json
-{
-  "action": "check",
-  "src": ["<source>"],
-  "dst": ["onhandwsl", "pancakewsl"],
-  "users": ["ezhao"]
-}
-```
-
-Do not use `root` or `autogroup:nonroot` in `users`, since those would permit
-other local accounts. The policy also needs an existing network grant or ACL
-from the same source to these hosts. Manage this policy in the Tailscale admin
-console; this repository does not modify a live tailnet.
-
 After switching a host, complete Tailscale authentication once if
 `sudo tailscale status` reports `NeedsLogin`:
 

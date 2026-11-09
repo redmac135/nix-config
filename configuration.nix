@@ -52,8 +52,7 @@
   services.tailscale = {
     enable = true;
 
-    # Tailscale SSH handles SSH on the Tailscale interface. Access is still
-    # limited by the tailnet policy documented in README.md.
+    # Tailscale SSH
     extraSetFlags = ["--ssh"];
   };
 
