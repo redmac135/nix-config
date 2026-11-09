@@ -1,5 +1,4 @@
 {
-  config,
   lib,
   pkgs,
   ...
@@ -50,7 +49,12 @@
     };
   };
 
-  services.tailscale.enable = true;
+  services.tailscale = {
+    enable = true;
+
+    # Tailscale SSH
+    extraSetFlags = ["--ssh"];
+  };
 
   # NixOS owns the Cloudflare Tunnel service; `cloudflared service install`
   # cannot write /etc/systemd/system on an immutable NixOS system.

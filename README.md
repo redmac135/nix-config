@@ -26,6 +26,25 @@ sudo nixos-rebuild switch --flake .#onhandwsl
 sudo nixos-rebuild switch --flake .#pancakewsl
 ```
 
+## Tailscale SSH
+
+After switching a host, complete Tailscale authentication once if
+`sudo tailscale status` reports `NeedsLogin`:
+
+```bash
+sudo tailscale up
+sudo systemctl start tailscaled-set.service
+```
+
+The second command is safe to rerun and applies the declarative
+`--ssh` preference. Connect using the host's MagicDNS name and the only
+configured local account:
+
+```bash
+ssh ezhao@onhandwsl
+ssh ezhao@pancakewsl
+```
+
 ## Windows WezTerm and WSL
 
 The tracked Windows templates are in `files/windows/`. They preserve the
