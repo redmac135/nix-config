@@ -281,7 +281,10 @@ in {
         end
       )
     ' "$pi_settings" >/dev/null 2>&1; then
-      run ${piAgent}/bin/pi install npm:@ygncode/pi-web@beta
+      # Pi spawns npm, and pi-web's installer downloads its binary with curl.
+      # The installer also records PATH for its service, which needs pi itself.
+      PATH="${lib.makeBinPath [pkgs.nodejs pkgs.curl piAgent]}:$PATH" \
+        run ${piAgent}/bin/pi install npm:@ygncode/pi-web@beta
     fi
   '';
 }

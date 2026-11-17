@@ -114,9 +114,10 @@ nix build -L --no-link '.#nixosConfigurations.onhandwsl.config.system.build.topl
 nix build -L --no-link '.#nixosConfigurations.pancakewsl.config.system.build.toplevel'
 ```
 
-Keep each flake input update in its own PR. In particular, an `llm-agents`
-update can change Pi, Herdr, and OpenCode together, so review all three selected
-versions.
+For manual updates, keep each flake input update in its own PR. In particular,
+an `llm-agents` update can change Pi, Herdr, and OpenCode together, so review all
+three selected versions. The automated bulk update described below is an
+exception; review its combined changes carefully and split it if needed.
 
 The custom npm tools in `packages/npm-packages.nix` are pinned separately.
 Use the updater for a reviewable, transactional change. It refuses dirty or
@@ -137,11 +138,11 @@ git diff --check
 git diff -- packages/npm-packages.nix packages/npm/lockfiles
 ```
 
-The `Update npm packages, no-mistakes, and flake inputs` workflow runs daily at
-5:30 AM EST and can also be started manually. It runs the combined updater and
-opens or updates a PR against `dev` only when the generated files change. The
-updater refreshes npm packages, the `no-mistakes` release and Go module hash,
-and the flake inputs:
+The `Update npm packages, no-mistakes, and flake inputs` workflow runs weekly
+on Monday at 10:30 UTC and can also be started manually. It runs the combined
+updater and opens or updates a PR against `dev` only when the generated files
+change. The updater refreshes npm packages, the `no-mistakes` release and Go
+module hash, and the flake inputs:
 
 ```bash
 ./scripts/update-npm-packages-and-flake
@@ -225,9 +226,12 @@ and [Pi v1.2.0 configuration](https://github.com/earendil-works/pi/blob/v1.2.0/p
 Home Manager installs Herdr's Pi lifecycle integration and the configured
 `pi-web` package through their supported install commands. Pi records package
 sources in `~/.pi/agent/settings.json`; the activation checks for `pi-web`
-before installing it and leaves other package entries intact. The Pi MCP
-adapter's global server overrides remain in `~/.pi/agent/mcp.json`, and OAuth
-credentials are stored separately by the adapter in the operating system
+before installing it and leaves other package entries intact. Activation supplies
+Nix-provided Node.js, npm, curl, and Pi on the installer PATH, independently of
+mise and the interactive shell. Installing pi-web downloads its release and may
+configure its user service. The Pi MCP adapter's global server overrides remain
+in `~/.pi/agent/mcp.json`, and OAuth credentials are stored separately by the
+adapter in the operating system
 credential store. Home Manager does not declare either JSON file, so existing
 manually managed packages and MCP servers are preserved.
 
