@@ -82,12 +82,12 @@ in {
     # kunchenguid
     treehouse.default
     noMistakes
-    npmPkgs.gh-axi
-    npmPkgs.chrome-devtools-axi
-    npmPkgs.chrome-devtools-mcp
-    npmPkgs.lavish-axi
-    npmPkgs.tasks-axi
-    npmPkgs.quota-axi
+    firstmateTools.gh-axi
+    firstmateTools.chrome-devtools-axi
+    firstmateTools.chrome-devtools-mcp
+    firstmateTools.lavish-axi
+    firstmateTools.tasks-axi
+    firstmateTools.quota-axi
   ];
 
   # ---------------------------------------------------------------------------

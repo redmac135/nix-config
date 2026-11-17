@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+# Source only in trusted CI steps. Scope the read-only token to this Git URL.
+: "${FIRSTMATE_NIX_TOKEN:?Set the FIRSTMATE_NIX_TOKEN Actions secret}"
+export GIT_CONFIG_COUNT=3
+export GIT_CONFIG_KEY_0=credential.https://github.com/redmac135/firstmate-nix.git.useHttpPath
+export GIT_CONFIG_VALUE_0=true
+export GIT_CONFIG_KEY_1=credential.https://github.com/redmac135/firstmate-nix.git.helper
+export GIT_CONFIG_VALUE_1=
+export GIT_CONFIG_KEY_2=credential.https://github.com/redmac135/firstmate-nix.git.helper
+export GIT_CONFIG_VALUE_2='!f() { echo username=x-access-token; echo "password=$FIRSTMATE_NIX_TOKEN"; }; f'
