@@ -115,6 +115,8 @@ in {
     enable = true;
     defaultEditor = true;
     extraPackages = [pkgs.copilot-language-server];
+    # Avoid rustup/mise shims shadowing the Nix-provided language server.
+    extraWrapperArgs = ["--set" "NVIM_RUST_ANALYZER" (lib.getExe pkgs.rust-analyzer)];
 
     # Pre-compile Tree-sitter parsers into the Nix store
     plugins = let

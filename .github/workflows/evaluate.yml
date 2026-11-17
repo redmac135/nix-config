@@ -33,3 +33,5 @@ jobs:
         run: ./tests/agent-extensions.sh "${{ matrix.configuration }}"
       - name: Test manual mise installation
         run: ./tests/mise-install.sh "${{ matrix.configuration }}"
+      - name: Test representative Neovim file opening
+        run: ./tests/nvim-open.sh "${{ matrix.configuration }}"
