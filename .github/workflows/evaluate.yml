@@ -6,7 +6,23 @@ on:
     branches:
       - dev
 
+# Each push gets its own group, including queued pushes. Only older runs for
+# the same PR may be canceled by a newer run.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
+  updater-fixtures:
+    name: updater-fixtures
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - name: Test updater fixtures
+        run: |
+          ./tests/update-npm-packages.sh
+          ./tests/update-npm-packages-and-flake.sh
+
   build:
     name: build-${{ matrix.configuration }}
     strategy:
