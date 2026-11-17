@@ -225,9 +225,12 @@ and [Pi v1.2.0 configuration](https://github.com/earendil-works/pi/blob/v1.2.0/p
 Home Manager installs Herdr's Pi lifecycle integration and the configured
 `pi-web` package through their supported install commands. Pi records package
 sources in `~/.pi/agent/settings.json`; the activation checks for `pi-web`
-before installing it and leaves other package entries intact. The Pi MCP
-adapter's global server overrides remain in `~/.pi/agent/mcp.json`, and OAuth
-credentials are stored separately by the adapter in the operating system
+before installing it and leaves other package entries intact. Activation supplies
+Nix-provided Node.js, npm, curl, and Pi on the installer PATH, independently of
+mise and the interactive shell. Installing pi-web downloads its release and may
+configure its user service. The Pi MCP adapter's global server overrides remain
+in `~/.pi/agent/mcp.json`, and OAuth credentials are stored separately by the
+adapter in the operating system
 credential store. Home Manager does not declare either JSON file, so existing
 manually managed packages and MCP servers are preserved.
 
