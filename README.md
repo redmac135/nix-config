@@ -177,10 +177,22 @@ fallbacks, `pkg-config` and `zlib.dev` provide build metadata and headers,
 `openssl.dev` provides TLS headers, and `gnupg` verifies released tool archives.
 The global mise config pins Node.js 24 and explicitly selects prebuilt Node.js
 and Python artifacts; without those settings, mise selected aarch64 source
-archives and spent minutes compiling Node. Its bundled npm is validated by
-`tests/mise-install.sh`. CI builds both host closures and runs the bounded
-manual Node.js, npm, and Python mise install on each native runner; an
-architecture-mismatched runner cannot build the other host's profile.
+archives and spent minutes compiling Node. `tests/mise-install.sh` validates
+Node.js, npm, Python, and the mise-selected Rust toolchain on each native
+runner, including an offline Cargo build and run. An architecture-mismatched
+runner cannot build the other host's profile.
+
+To check an existing Rust installation without installing tools, run:
+
+```bash
+CARGO_HOME="${CARGO_HOME:-$HOME/.cargo}" ./tests/mise-rust-smoke.sh
+```
+
+If rustup reports that Cargo or rustc is not applicable, inspect both
+`rustup show` and the selected toolchain's `bin` directory. Rustup's recorded
+components alone do not establish that the binaries are present. Preserve the
+existing rustup and Cargo data while diagnosing an incomplete installation.
+
 If an interrupted rebuild leaves a transient unit loaded, stop it before retrying:
 
 ```bash

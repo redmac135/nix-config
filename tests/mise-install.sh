@@ -63,6 +63,7 @@ else
   [[ $node_version == v24.* ]]
   [[ $python_version == "Python 3.12."* ]]
   "$mise/bin/mise" exec -- npm --version >/dev/null
+  "$root/tests/mise-rust-smoke.sh" "$mise/bin/mise"
 fi
 
 echo 'mise manual-install regression test passed'
