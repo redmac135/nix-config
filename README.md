@@ -133,7 +133,7 @@ The Firstmate npm tools are selected from the private `firstmate-nix` input.
 Update their pins upstream, then update `firstmate-nix` here and review its
 locked revision and selected versions. Local Git must have read access to that
 repository. CI needs a fine-grained token with read-only Contents access to
-`redmac135/firstmate-nix`, stored as the `FIRSTMATE_NIX_TOKEN` repository
+`redmac135/firstmate-nix`, stored as the `FIRSTMATE_NIX_READ_TOKEN` repository
 Actions secret. Do not grant broader repository access or commit the token.
 The credential helper is scoped to that repository URL and enabled only in
 steps that need the input. Only run these workflows on trusted branches: code

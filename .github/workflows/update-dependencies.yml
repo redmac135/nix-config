@@ -26,7 +26,7 @@ jobs:
 
       - name: Update no-mistakes and flake inputs
         env:
-          FIRSTMATE_NIX_TOKEN: ${{ secrets.FIRSTMATE_NIX_TOKEN }}
+          FIRSTMATE_NIX_TOKEN: ${{ secrets.FIRSTMATE_NIX_READ_TOKEN }}
         run: |
           source scripts/firstmate-nix-ci-auth
           ./scripts/update-dependencies

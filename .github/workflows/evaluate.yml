@@ -40,13 +40,13 @@ jobs:
           extra_nix_config: accept-flake-config = true
       - name: Build ${{ matrix.configuration }} system closure
         env:
-          FIRSTMATE_NIX_TOKEN: ${{ secrets.FIRSTMATE_NIX_TOKEN }}
+          FIRSTMATE_NIX_TOKEN: ${{ secrets.FIRSTMATE_NIX_READ_TOKEN }}
         run: |
           source scripts/firstmate-nix-ci-auth
           nix build -L --no-link '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
       - name: Test host configuration
         env:
-          FIRSTMATE_NIX_TOKEN: ${{ secrets.FIRSTMATE_NIX_TOKEN }}
+          FIRSTMATE_NIX_TOKEN: ${{ secrets.FIRSTMATE_NIX_READ_TOKEN }}
         run: |
           source scripts/firstmate-nix-ci-auth
           nix eval --impure --expr 'import ./tests/firstmate-tools.nix { flake = builtins.getFlake (toString ./.); }' --apply 'x: assert x; x'
