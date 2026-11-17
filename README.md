@@ -124,9 +124,10 @@ nix build -L --no-link '.#nixosConfigurations.onhandwsl.config.system.build.topl
 nix build -L --no-link '.#nixosConfigurations.pancakewsl.config.system.build.toplevel'
 ```
 
-Keep each flake input update in its own PR. In particular, an `llm-agents`
-update can change Pi, Herdr, and OpenCode together, so review all three selected
-versions.
+For manual updates, keep each flake input update in its own PR. In particular,
+an `llm-agents` update can change Pi, Herdr, and OpenCode together, so review all
+three selected versions. The automated bulk update described below is an
+exception; review its combined changes carefully and split it if needed.
 
 The custom npm tools in `packages/npm-packages.nix` are pinned separately.
 Use the updater for a reviewable, transactional change. It refuses dirty or
@@ -147,11 +148,11 @@ git diff --check
 git diff -- packages/npm-packages.nix packages/npm/lockfiles
 ```
 
-The `Update npm packages, no-mistakes, and flake inputs` workflow runs daily at
-5:30 AM EST and can also be started manually. It runs the combined updater and
-opens or updates a PR against `dev` only when the generated files change. The
-updater refreshes npm packages, the `no-mistakes` release and Go module hash,
-and the flake inputs:
+The `Update npm packages, no-mistakes, and flake inputs` workflow runs weekly
+on Monday at 10:30 UTC and can also be started manually. It runs the combined
+updater and opens or updates a PR against `dev` only when the generated files
+change. The updater refreshes npm packages, the `no-mistakes` release and Go
+module hash, and the flake inputs:
 
 ```bash
 ./scripts/update-npm-packages-and-flake
