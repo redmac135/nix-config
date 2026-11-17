@@ -92,10 +92,20 @@ The Neovim configuration includes GitHub Copilot inline suggestions and
 completion-menu results. After rebuilding, run `:Copilot auth` in Neovim to
 sign in. Inline suggestions use these insert-mode keybindings:
 
-- `Alt-l`: accept the suggestion
+- `Alt-l`: accept the inline suggestion, or the selected Copilot completion-menu result
 - `Alt-]`: show the next suggestion
 - `Alt-[`: show the previous suggestion
 - `Ctrl-]`: dismiss the suggestion
+
+Inline suggestions are hidden while the completion menu is open. Select a
+Copilot result before pressing `Alt-l`, or close the menu to use an inline
+suggestion. Other completion sources are not accepted by `Alt-l`.
+
+For a representative Neovim regression test, run `./tests/nvim-open.sh onhandwsl`
+(or `pancakewsl` on that host). It opens Rust and Lua files in an
+isolated home, starts the real Rust language server, and tests completion
+keybindings with a synthetic Copilot source. It does not test every file type
+or the authenticated Copilot service.
 
 ## Update packages
 
