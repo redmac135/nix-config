@@ -9,6 +9,10 @@ case $configuration in
 esac
 
 nvim=$(nix build --no-link --print-out-paths "$ROOT#nixosConfigurations.${configuration}.config.home-manager.users.ezhao.programs.neovim.finalPackage")/bin/nvim
+# The LSP root resolver runs cargo metadata before starting rust-analyzer.
+# Use the flake's real toolchain, not a host rustup shim with unknown defaults.
+cargo=$(nix build --no-link --print-out-paths "$ROOT#nixosConfigurations.${configuration}.pkgs.cargo")
+rustc=$(nix build --no-link --print-out-paths "$ROOT#nixosConfigurations.${configuration}.pkgs.rustc")
 pack_attr="$ROOT#nixosConfigurations.${configuration}.config.home-manager.users.ezhao.xdg.dataFile.\"nvim/site/pack/hm\".source"
 pack=$(nix eval --raw "$pack_attr")
 pack_drv=$(nix eval --raw "$pack_attr" --apply 'x: builtins.head (builtins.attrNames (builtins.getContext x))')
@@ -16,7 +20,8 @@ nix-store --realise "$pack_drv" >/dev/null
 tmp=$(mktemp -d)
 trap 'rm -rf "$tmp"' EXIT
 export HOME="$tmp/home" XDG_CONFIG_HOME="$tmp/config" XDG_STATE_HOME="$tmp/state" XDG_DATA_HOME="$tmp/data" XDG_CACHE_HOME="$tmp/cache"
-export CARGO_HOME="$tmp/cargo" CARGO_TARGET_DIR="$tmp/target" CARGO_NET_OFFLINE=true
+export CARGO_HOME="$tmp/cargo" CARGO_TARGET_DIR="$tmp/target" CARGO_NET_OFFLINE=true RUSTUP_HOME="$tmp/rustup"
+unset RUSTUP_TOOLCHAIN RUSTC RUSTC_WRAPPER RUSTC_WORKSPACE_WRAPPER
 mkdir -p "$HOME" "$XDG_CONFIG_HOME" "$tmp/project/src" "$tmp/bin"
 ln -s "$ROOT/nvim" "$XDG_CONFIG_HOME/nvim"
 mkdir -p "$XDG_DATA_HOME/nvim/site/pack"
@@ -27,7 +32,7 @@ printf 'local value = 42\n' > "$tmp/project/example.lua"
 # A broken PATH shim must not shadow the Nix-managed server.
 printf '#!/bin/sh\necho shim-invoked > "$HOME/shim-invoked"\nexit 1\n' > "$tmp/bin/rust-analyzer"
 chmod +x "$tmp/bin/rust-analyzer"
-export PATH="$tmp/bin:$PATH" NVIM_TEST_PROJECT="$tmp/project"
+export PATH="$tmp/bin:$cargo/bin:$rustc/bin:$PATH" NVIM_TEST_PROJECT="$tmp/project"
 ( cd "$tmp/project" && "$nvim" --headless -i NONE -n src/main.rs -c "luafile $ROOT/tests/nvim-open.lua" )
 [[ ! -e "$HOME/shim-invoked" ]]
 echo 'Neovim representative file-opening tests passed'
