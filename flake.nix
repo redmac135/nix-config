@@ -98,6 +98,15 @@
     };
 
     devShells = nixpkgs.lib.genAttrs systems (system: {
+      # Pilot for the npm package maintenance workflow and Rust/Node projects.
+      # The repository's flake.lock pins all of these to the same package set.
+      toolchain = let
+        pkgs = import nixpkgs {inherit system;};
+      in
+        pkgs.mkShell {
+          packages = with pkgs; [nodejs_24 rustc cargo rust-analyzer];
+        };
+
       tauri = let
         pkgs = import nixpkgs {inherit system;};
       in

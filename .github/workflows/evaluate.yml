@@ -31,5 +31,7 @@ jobs:
         run: ./tests/agent-instructions.sh "${{ matrix.configuration }}"
       - name: Test agent extension activation
         run: ./tests/agent-extensions.sh "${{ matrix.configuration }}"
+      - name: Test Nix baseline and pilot shell
+        run: ./tests/toolchain.sh "${{ matrix.configuration }}"
       - name: Test manual mise installation
         run: ./tests/mise-install.sh "${{ matrix.configuration }}"

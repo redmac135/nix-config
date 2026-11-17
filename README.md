@@ -170,17 +170,53 @@ sudo nixos-rebuild switch --flake .#onhandwsl
 sudo nixos-rebuild switch --flake .#pancakewsl
 ```
 
-Mise tools are installed manually with `mise install` after switching. `programs.nix-ld.enable`
-supplies the linker for mise's upstream Node.js and Python binaries. `python3`
-supplies the `python` configure command, `gcc` and `gnumake` compile source
-fallbacks, `pkg-config` and `zlib.dev` provide build metadata and headers,
-`openssl.dev` provides TLS headers, and `gnupg` verifies released tool archives.
-The global mise config pins Node.js 24 and explicitly selects prebuilt Node.js
-and Python artifacts; without those settings, mise selected aarch64 source
-archives and spent minutes compiling Node. Its bundled npm is validated by
-`tests/mise-install.sh`. CI builds both host closures and runs the bounded
-manual Node.js, npm, and Python mise install on each native runner; an
-architecture-mismatched runner cannot build the other host's profile.
+### Toolchain ownership and pilot shell
+
+Home Manager supplies Node.js 24 (including npm), Cargo and rustc from the
+locked nixpkgs input, alongside rust-analyzer from the same package set. These
+are the baseline, not fixed versions independent of `flake.lock`: updating that
+lock changes them. The global mise config no longer selects Node or Rust. It
+still selects Python, pnpm, bun, deno and Go; existing project-level mise
+configuration remains active and can deliberately select its own Node or Rust.
+Mise installations remain manual (`mise install`); no existing mise, rustup or
+Cargo data is removed. The first rebuild after this change does not uninstall
+those tools. `programs.nix-ld.enable` supports mise's prebuilt binaries, and the
+build dependencies and GnuPG remain available for mise installations. Node and
+Python mise downloads use prebuilt artifacts where available.
+
+Mise's Zsh hook can place project tools ahead of the Nix profile, and an existing
+`~/.cargo/bin` or other PATH entry can also win. Check `type -a node npm rustc
+cargo rust-analyzer` and their `--version` output in the actual shell or editor
+terminal; a Nix profile alone cannot guarantee precedence. For noninteractive
+work, use the explicit pilot shell instead of relying on Zsh initialization:
+
+```bash
+nix develop .#toolchain -c node --version
+nix develop .#toolchain -c cargo --version
+# From a clean checkout, with network access:
+nix develop .#toolchain -c ./scripts/update-npm-packages --preview gh-axi
+```
+
+This repository's npm package maintenance is the pilot: the shell uses the
+repository's `flake.lock` for Node, Cargo, rustc and rust-analyzer, while the
+vendored npm lockfiles and fixed hashes pin packaged dependencies separately.
+The updater still needs Git, Python, Nix and network access; its npm registry
+queries and `nixpkgs#prefetch-npm-deps` registry lookup are not pinned by this
+shell. The shell can also be used as a starting point for Rust/Node projects, but a
+project needs its own committed flake and language lockfiles to pin its own
+versions. No automatic direnv integration is enabled. `nix develop -c` prepends
+these Nix tools over inherited mise/rustup shims; starting an interactive Zsh
+or running `mise exec` inside it can change PATH again. Start editors from the
+shell and verify their LSP and compiler paths; external editors may use a
+different environment. Native libraries, Rust targets, dependencies, caches,
+and offline availability are project-specific and not guaranteed by this
+pilot. Roll back the flake lock to a known-good commit to restore its package
+selection; store availability and rooted generations still matter.
+
+CI runs `tests/toolchain.sh` on both native architectures, including an offline
+Rust build with competing shims on PATH, and tests project-specific mise Node
+and global Python installation via `tests/mise-install.sh`. An
+architecture-mismatched runner cannot validate the other host's profile.
 If an interrupted rebuild leaves a transient unit loaded, stop it before retrying:
 
 ```bash

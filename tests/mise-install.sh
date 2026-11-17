@@ -40,6 +40,13 @@ mise=$(nix build --no-link --print-out-paths nixpkgs#mise)
 tmp=$(mktemp -d "${TMPDIR:-/tmp}/mise-install.XXXXXX")
 trap 'rm -rf "$tmp"' EXIT
 cp files/mise/config.toml "$tmp/config.toml"
+python3 -c 'import sys,tomllib
+with open(sys.argv[1], "rb") as f: tools = tomllib.load(f)["tools"]
+assert "node" not in tools and "rust" not in tools, "mise shadows the Nix baseline globally"
+' "$tmp/config.toml"
+# Node is no longer global, but existing project-specific mise versions work.
+printf '[tools]\nnode = "24"\n' > "$tmp/.mise.toml"
+export MISE_TRUSTED_CONFIG_PATHS="$tmp"
 real_home=$(getent passwd "$(id -u)" | cut -d: -f6)
 export HOME="$real_home"
 export MISE_GLOBAL_CONFIG_FILE="$tmp/config.toml"
@@ -63,6 +70,14 @@ else
   [[ $node_version == v24.* ]]
   [[ $python_version == "Python 3.12."* ]]
   "$mise/bin/mise" exec -- npm --version >/dev/null
+  echo 'mise manual runtime install passed'
 fi
 
-echo 'mise manual-install regression test passed'
+# Verify a project can select Rust too, without installing or changing rustup.
+printf 'rust = "1.80.0"\n' >> "$tmp/.mise.toml"
+"$mise/bin/mise" ls --current --json | python3 -c 'import json,sys
+selected = json.load(sys.stdin)
+assert selected["node"][0]["requested_version"] == "24"
+assert selected["rust"][0]["requested_version"] == "1.80.0"
+'
+echo 'mise configuration regression test passed'

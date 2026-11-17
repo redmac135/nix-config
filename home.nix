@@ -36,6 +36,9 @@ in {
     cloudflared
     esptool
     python3
+    nodejs_24
+    rustc
+    cargo
     gcc
     gnumake
     pkg-config
