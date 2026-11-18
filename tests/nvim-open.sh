@@ -13,6 +13,7 @@ nvim=$(nix build --no-link --print-out-paths "$ROOT#nixosConfigurations.${config
 # Use the flake's real toolchain, not a host rustup shim with unknown defaults.
 cargo=$(nix build --no-link --print-out-paths "$ROOT#nixosConfigurations.${configuration}.pkgs.cargo")
 rustc=$(nix build --no-link --print-out-paths "$ROOT#nixosConfigurations.${configuration}.pkgs.rustc")
+rustfmt=$(nix build --no-link --print-out-paths "$ROOT#nixosConfigurations.${configuration}.pkgs.rustfmt")
 pack_attr="$ROOT#nixosConfigurations.${configuration}.config.home-manager.users.ezhao.xdg.dataFile.\"nvim/site/pack/hm\".source"
 pack=$(nix eval --raw "$pack_attr")
 pack_drv=$(nix eval --raw "$pack_attr" --apply 'x: builtins.head (builtins.attrNames (builtins.getContext x))')
@@ -27,12 +28,14 @@ ln -s "$ROOT/nvim" "$XDG_CONFIG_HOME/nvim"
 mkdir -p "$XDG_DATA_HOME/nvim/site/pack"
 ln -s "$pack" "$XDG_DATA_HOME/nvim/site/pack/hm"
 printf '[package]\nname = "nvim-open-test"\nversion = "0.1.0"\nedition = "2021"\n' > "$tmp/project/Cargo.toml"
-printf 'fn main() { println!("hello"); }\n' > "$tmp/project/src/main.rs"
+printf 'struct Ray { origin: i32 }\nfn main() {\n    let ray = Ray { origin: 3 };\n    ray\n}\n' > "$tmp/project/src/main.rs"
 printf 'local value = 42\n' > "$tmp/project/example.lua"
 # A broken PATH shim must not shadow the Nix-managed server.
 printf '#!/bin/sh\necho shim-invoked > "$HOME/shim-invoked"\nexit 1\n' > "$tmp/bin/rust-analyzer"
 chmod +x "$tmp/bin/rust-analyzer"
-export PATH="$tmp/bin:$cargo/bin:$rustc/bin:$PATH" NVIM_TEST_PROJECT="$tmp/project"
-( cd "$tmp/project" && "$nvim" --headless -i NONE -n src/main.rs -c "luafile $ROOT/tests/nvim-open.lua" )
+export PATH="$tmp/bin:$cargo/bin:$rustc/bin:$rustfmt/bin:$PATH" NVIM_TEST_PROJECT="$tmp/project"
+# A real terminal is needed for TextChangedI and the completion popup to behave
+# as they do interactively. script(1) supplies a disposable pseudo-terminal.
+( cd "$tmp/project" && printf -v command '%q ' "$nvim" --cmd 'set background=dark' -i NONE -n src/main.rs -c "luafile $ROOT/tests/nvim-open.lua" && TERM=xterm-256color script -q -e -c "$command" /dev/null > "$tmp/terminal.log" ) || { tr '\r' '\n' < "$tmp/terminal.log" >&2; exit 1; }
 [[ ! -e "$HOME/shim-invoked" ]]
 echo 'Neovim representative file-opening tests passed'

@@ -5,6 +5,20 @@ local function run()
 	assert(vim.bo.filetype == "rust", "Rust filetype was not detected")
 	assert(vim.env.NVIM_RUST_ANALYZER:match("^/nix/store/.*/bin/rust%-analyzer$"))
 	assert(vim.lsp.config.rust_analyzer.cmd[1] == vim.env.NVIM_RUST_ANALYZER)
+	-- Force the slow-start case: enter insert mode before enabling the server.
+	vim.lsp.enable("rust_analyzer", false)
+	assert(
+		vim.wait(5000, function()
+			return #vim.lsp.get_clients({ name = "rust_analyzer" }) == 0
+		end, 50),
+		"rust-analyzer did not stop"
+	)
+	vim.cmd("Copilot disable")
+	vim.api.nvim_win_set_cursor(0, { 4, 7 })
+	vim.api.nvim_input("A")
+	coroutine.yield(100)
+	assert(vim.fn.mode() == "i", "insert mode not entered")
+	vim.lsp.enable("rust_analyzer", true)
 	assert(
 		vim.wait(15000, function()
 			for _, client in ipairs(vim.lsp.get_clients({ bufnr = 0, name = "rust_analyzer" })) do
@@ -15,15 +29,41 @@ local function run()
 		end, 50),
 		"rust-analyzer did not initialize and attach"
 	)
+	-- Separate keystrokes allow Neovim to deliver TextChangedI for each one.
+	for _, char in ipairs({ ".", "o", "r" }) do
+		vim.api.nvim_input(char)
+		coroutine.yield(200)
+	end
+	local cmp = require("cmp")
+	local deadline = vim.uv.now() + 15000
+	local found = false
+	while vim.uv.now() < deadline and not found do
+		for _, entry in ipairs(cmp.get_entries()) do
+			if entry.source.name == "nvim_lsp" and entry:get_completion_item().label:match("^origin") then
+				found = cmp.visible()
+			end
+		end
+		if not found then
+			coroutine.yield(100)
+		end
+	end
+	assert(found, "Rust field completion did not appear in the menu")
+	vim.api.nvim_input("<Tab>")
+	coroutine.yield(300)
+	assert(vim.api.nvim_get_current_line():match("ray%.origin"), "Tab did not accept Rust completion")
+	vim.api.nvim_input("<Esc>")
+	coroutine.yield(100)
+	vim.api.nvim_buf_set_lines(0, 0, -1, false, { "fn main(){let value=42;}" })
+	assert(require("conform").format({ async = false, lsp_format = "never", timeout_ms = 10000 }))
+	assert(vim.api.nvim_buf_get_lines(0, 0, -1, false)[2] == "    let value = 42;", "rustfmt did not format Rust")
 
-	vim.cmd.edit(vim.fn.fnameescape(project .. "/example.lua"))
+	vim.cmd("edit! " .. vim.fn.fnameescape(project .. "/example.lua"))
 	assert(vim.bo.filetype == "lua", "Lua filetype was not detected")
 	assert(vim.api.nvim_get_current_line() == "local value = 42")
 	assert(vim.v.errmsg == "", "file-opening error: " .. vim.v.errmsg)
 
 	-- Use deterministic completion sources instead of requiring Copilot credentials.
 	vim.cmd("Copilot disable")
-	local cmp = require("cmp")
 	for _, source in ipairs(cmp.get_registered_sources()) do
 		if source.name == "copilot" then
 			cmp.unregister_source(source.id)

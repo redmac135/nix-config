@@ -4,6 +4,17 @@ local luasnip = require("luasnip")
 require("luasnip.loaders.from_vscode").lazy_load()
 require("copilot_cmp").setup()
 
+-- cmp-nvim-lsp normally discovers clients only on InsertEnter. A server can
+-- attach after the user starts typing, leaving completion unavailable until
+-- they leave and re-enter insert mode. Refresh using its own registration logic.
+vim.api.nvim_create_autocmd("LspAttach", {
+	callback = function(event)
+		if event.buf == vim.api.nvim_get_current_buf() and vim.fn.mode():match("^[iR]") then
+			require("cmp_nvim_lsp")._on_insert_enter()
+		end
+	end,
+})
+
 cmp.event:on("menu_opened", function()
 	vim.b.copilot_suggestion_hidden = true
 end)
