@@ -2,7 +2,13 @@
 set -euo pipefail
 
 root=$(dirname "$(dirname "$(realpath "$0")")")
-python=$(command -v python3)
+case $(uname -m) in
+  aarch64) configuration=onhandwsl ;;
+  x86_64) configuration=pancakewsl ;;
+  *) echo "unsupported host architecture: $(uname -m)" >&2; exit 2 ;;
+esac
+# Use the same Nixpkgs glibc as the runtime libraries, not the host's Python.
+python="$(nix build --no-link --print-out-paths "$root#nixosConfigurations.$configuration.pkgs.python3")/bin/python3"
 sentinel=/nonexistent/gui-shell-preserved
 
 check_shell() {
