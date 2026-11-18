@@ -15,9 +15,11 @@ cd "$REPO_ROOT"
 [[ -f $REPO_ROOT/flake.nix ]] || fail "flake.nix does not exist in $REPO_ROOT"
 command -v "$NIX_COMMAND" >/dev/null 2>&1 || fail "Nix is required"
 
-"$NIX_COMMAND" run .#nix-update -- noMistakes --flake \
+if ! "$NIX_COMMAND" run .#nix-update -- noMistakes --flake \
   --override-filename packages/no-mistakes.nix \
-  --use-github-releases
+  --use-github-releases; then
+  fail "no-mistakes update failed; for GitHub API rate limits, set GITHUB_TOKEN or wait for the limit to reset (also check token validity)"
+fi
 "$NIX_COMMAND" flake update
 git diff --check || fail "generated diff has whitespace errors"
 

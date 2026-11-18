@@ -148,6 +148,13 @@ the generated files change:
 ./scripts/update-dependencies
 ```
 
+The updater uses the GitHub releases API for no-mistakes. CI supplies its
+built-in `GITHUB_TOKEN` for that API separately from the private-input token.
+For local updates, optionally set `GITHUB_TOKEN` to a token with access to
+public repositories to increase the API rate limit. If the limit is exhausted,
+wait for it to reset; if authentication fails, check the token. `nix-update`
+may prefer credentials in `~/.netrc` for github.com over `GITHUB_TOKEN`.
+
 The manual-install regression test checks the generated user environment:
 
 ```bash
