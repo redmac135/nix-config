@@ -6,11 +6,6 @@
 }: let
   herdr = pkgs.llmAgents.herdr;
   piAgent = pkgs.llmAgents.pi.override {useBun = false;};
-  typescript-language-server-fixed = pkgs.typescript-language-server.overrideAttrs (old: {
-    pnpmDeps = old.pnpmDeps.overrideAttrs (_: {
-      outputHash = "sha256-xR/EF60lVBsITKgH7wCM2wHM46PFQevD51KfCENSUH4=";
-    });
-  });
 in {
   home.username = "ezhao";
   home.homeDirectory = "/home/ezhao";
@@ -51,8 +46,7 @@ in {
     dockerfile-language-server
     yaml-language-server
     svelte-language-server
-    # typescript-language-server
-    typescript-language-server-fixed
+    typescript-language-server
     pyright
     nil # nix LSP
     bash-language-server
