@@ -86,6 +86,46 @@ installation is named `NixOS` (or change `config.default_domain` in the
 WezTerm file to match it). The `HOME` working directory is resolved inside
 WSL, not from a private Windows path.
 
+## Rust GUI apps on WSLg
+
+For Cargo-built Wayland/wgpu apps that load libraries at runtime, enter the
+opt-in GUI shell from the app's directory, replacing the path with this checkout:
+
+```bash
+nix develop /path/to/nix-config#gui
+cargo run
+```
+
+The shell exposes the Wayland client and Vulkan loader via `LD_LIBRARY_PATH`.
+This is scoped to the shell rather than all Nix applications. It does not start
+a compositor or supply a Vulkan driver; WSLg and a working graphics driver are
+still required. Run `./tests/gui-shell.sh` from this checkout to check the shell's
+runtime library lookup.
+
+If winit reports `WaylandError(Connection(NoCompositor))`, first inspect
+`WAYLAND_DISPLAY` and `XDG_RUNTIME_DIR`, then check that the corresponding
+socket accepts connections. A socket file or symlink existing is not enough:
+
+```bash
+printf 'WAYLAND_DISPLAY=%s XDG_RUNTIME_DIR=%s DISPLAY=%s\n' "${WAYLAND_DISPLAY-}" "${XDG_RUNTIME_DIR-}" "${DISPLAY-}"
+python3 -c 'import os, socket; p = os.path.join(os.environ["XDG_RUNTIME_DIR"], os.environ["WAYLAND_DISPLAY"]); s = socket.socket(socket.AF_UNIX); s.connect(p); print("connected:", p)'
+```
+
+For the usual WSLg setup, the runtime socket points into
+`/mnt/wslg/runtime-dir`. Check `/mnt/wslg/weston.log` for compositor startup
+errors. For example, `failed to bind to /tmp/.X11-unix/X0: Address already in
+use` can prevent WSLg startup even when the socket files remain. Do not delete
+shared sockets blindly. WSLg runs on the Windows/WSL side: check that GUI apps
+are enabled and WSL is up to date, and consider `wsl --shutdown` from Windows
+only after stopping or saving work in all WSL distributions. A Windows-side
+repair or restart may be needed; adding Linux packages alone cannot start WSLg.
+
+In winit 0.30, a set `WAYLAND_DISPLAY` selects Wayland even if that connection
+fails; `WINIT_UNIX_BACKEND` no longer selects the backend. An X11-only test can
+unset `WAYLAND_DISPLAY` and `WAYLAND_SOCKET`, but requires a working X server
+and its own runtime libraries. A missing Wayland library or Vulkan loader can
+be masked until after the compositor socket is reachable.
+
 ## GitHub Copilot in Neovim
 
 The Neovim configuration includes GitHub Copilot inline suggestions and
