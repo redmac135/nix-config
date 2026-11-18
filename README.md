@@ -101,11 +101,26 @@ Inline suggestions are hidden while the completion menu is open. Select a
 Copilot result before pressing `Alt-l`, or close the menu to use an inline
 suggestion. Other completion sources are not accepted by `Alt-l`.
 
+## Rust in Neovim
+
+After rebuilding and switching the host, run `mise install` to install the
+configured Rust toolchain. The Nix-managed rust-analyzer uses the project's
+Cargo toolchain on `PATH` for metadata and diagnostics. Install the standard
+components if they are missing: `rustup component add rust-src rustfmt clippy`.
+Run `cargo test` or `cargo clippy` in the project; rust-analyzer uses
+`cargo check` for diagnostics. Cargo dependencies must be available for
+project-wide analysis. Use `:checkhealth vim.lsp` and `cargo metadata` to
+diagnose server or project loading issues.
+
+Completion appears while typing, or use `Ctrl-Space`; `Tab` accepts a result.
+Use `<leader>fm` to format Rust with rustfmt, and the existing LSP mappings for
+code actions, definitions, and renaming.
+
 For a representative Neovim regression test, run `./tests/nvim-open.sh onhandwsl`
-(or `pancakewsl` on that host). It opens Rust and Lua files in an
-isolated home, starts the real Rust language server, and tests completion
-keybindings with a synthetic Copilot source. It does not test every file type
-or the authenticated Copilot service.
+(or `pancakewsl` on that host). It uses a pseudo-terminal and isolated home,
+starts the real Rust language server against an offline Cargo fixture, checks
+completion and rustfmt, and tests Copilot keybindings with a synthetic source.
+It does not test external dependencies or the authenticated Copilot service.
 
 ## Update packages
 
