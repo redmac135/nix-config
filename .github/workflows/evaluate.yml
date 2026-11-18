@@ -54,3 +54,4 @@ jobs:
           ./tests/agent-extensions.sh "${{ matrix.configuration }}"
           ./tests/mise-install.sh "${{ matrix.configuration }}"
           ./tests/nvim-open.sh "${{ matrix.configuration }}"
+          ./tests/gui-shell.sh

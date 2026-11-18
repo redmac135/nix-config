@@ -99,6 +99,16 @@
     };
 
     devShells = nixpkgs.lib.genAttrs systems (system: {
+      # Cargo-built GUI binaries can dlopen these libraries after linking.
+      gui = let
+        pkgs = import nixpkgs {inherit system;};
+      in
+        pkgs.mkShell {
+          shellHook = ''
+            export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [pkgs.wayland pkgs.vulkan-loader]}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+          '';
+        };
+
       tauri = let
         pkgs = import nixpkgs {inherit system;};
       in
