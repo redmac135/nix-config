@@ -12,17 +12,6 @@ def git_file(revision: str, name: str) -> str:
     return subprocess.check_output(["git", "show", f"{revision}:{name}"], text=True)
 
 
-def npm_versions(text: str) -> dict[str, str]:
-    blocks = re.findall(r"(?ms)^\s*[A-Za-z0-9_-]+ = mkNpmTool \{(.*?)^\s*};", text)
-    versions = {}
-    for block in blocks:
-        package = re.search(r'^\s*pname = "([^\"]+)";', block, re.MULTILINE)
-        version = re.search(r'^\s*version = "([^\"]+)";', block, re.MULTILINE)
-        if package and version:
-            versions[package.group(1)] = version.group(1)
-    return versions
-
-
 def no_mistakes_version(text: str) -> dict[str, str]:
     version = re.search(r'^\s*version = "([^"]+)";', text, re.MULTILINE)
     return {"no-mistakes": version.group(1)} if version else {}
@@ -58,10 +47,6 @@ def main() -> None:
         raise SystemExit("usage: update-summary.py BASE_REVISION OUTPUT_FILE")
     base, output = sys.argv[1:]
     files = {
-        "npm packages": (
-            "packages/npm-packages.nix",
-            npm_versions,
-        ),
         "no-mistakes": ("packages/no-mistakes.nix", no_mistakes_version),
         "Nix flake inputs": ("flake.lock", flake_inputs),
     }

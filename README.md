@@ -129,33 +129,23 @@ an `llm-agents` update can change Pi, Herdr, and OpenCode together, so review al
 three selected versions. The automated bulk update described below is an
 exception; review its combined changes carefully and split it if needed.
 
-The custom npm tools in `packages/npm-packages.nix` are pinned separately.
-Use the updater for a reviewable, transactional change. It refuses dirty or
-ambiguous Git state, and preview is always side-effect free in the worktree:
+The Firstmate npm tools are selected from the private `firstmate-nix` input.
+Update their pins upstream, then update `firstmate-nix` here and review its
+locked revision and selected versions. Local Git must have read access to that
+repository. CI needs a fine-grained token with read-only Contents access to
+`redmac135/firstmate-nix`, stored as the `FIRSTMATE_NIX_READ_TOKEN` repository
+Actions secret. Do not grant broader repository access or commit the token.
+The credential helper is scoped to that repository URL and enabled only in
+steps that need the input. Only run these workflows on trusted branches: code
+executed by a workflow can read its secrets. Fork PRs do not receive repository
+secrets and cannot run these checks without a trusted maintainer-run build.
+
+The `Update no-mistakes and flake inputs` workflow runs Mondays at 10:30 UTC
+and can also be started manually. It opens or updates a PR against `dev` when
+the generated files change:
 
 ```bash
-# Inspect one package's latest release (no tracked files are changed)
-./scripts/update-npm-packages --preview gh-axi
-# Inspect an explicitly requested version
-./scripts/update-npm-packages --preview gh-axi 0.1.29
-# Apply one package after reviewing the preview
-./scripts/update-npm-packages --apply gh-axi
-# All packages is intentionally opt-in
-./scripts/update-npm-packages --preview --all
-./scripts/update-npm-packages --apply --all
-
-git diff --check
-git diff -- packages/npm-packages.nix packages/npm/lockfiles
-```
-
-The `Update npm packages, no-mistakes, and flake inputs` workflow runs weekly
-on Monday at 10:30 UTC and can also be started manually. It runs the combined
-updater and opens or updates a PR against `dev` only when the generated files
-change. The updater refreshes npm packages, the `no-mistakes` release and Go
-module hash, and the flake inputs:
-
-```bash
-./scripts/update-npm-packages-and-flake
+./scripts/update-dependencies
 ```
 
 The manual-install regression test checks the generated user environment:
@@ -164,12 +154,6 @@ The manual-install regression test checks the generated user environment:
 ./tests/mise-install.sh onhandwsl
 ./tests/mise-install.sh pancakewsl
 ```
-
-The script downloads the published tarball, regenerates its vendored
-`package-lock.json` with scripts disabled, and computes both Nix hashes. A
-failed apply rolls back all files; review and commit the resulting diff
-manually. The updater supports every package declared through `mkNpmTool` in
-`packages/npm-packages.nix`, including `chrome-devtools-mcp`.
 
 After review, validate both native closures and manually rebuild the matching
 host:

@@ -20,8 +20,7 @@ jobs:
       - uses: actions/checkout@v7
       - name: Test updater fixtures
         run: |
-          ./tests/update-npm-packages.sh
-          ./tests/update-npm-packages-and-flake.sh
+          ./tests/update-dependencies.sh
 
   build:
     name: build-${{ matrix.configuration }}
@@ -40,14 +39,18 @@ jobs:
         with:
           extra_nix_config: accept-flake-config = true
       - name: Build ${{ matrix.configuration }} system closure
-        run: >-
-          nix build -L --no-link
-          '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
-      - name: Test agent instruction configuration
-        run: ./tests/agent-instructions.sh "${{ matrix.configuration }}"
-      - name: Test agent extension activation
-        run: ./tests/agent-extensions.sh "${{ matrix.configuration }}"
-      - name: Test manual mise installation
-        run: ./tests/mise-install.sh "${{ matrix.configuration }}"
-      - name: Test representative Neovim file opening
-        run: ./tests/nvim-open.sh "${{ matrix.configuration }}"
+        env:
+          FIRSTMATE_NIX_TOKEN: ${{ secrets.FIRSTMATE_NIX_READ_TOKEN }}
+        run: |
+          source scripts/firstmate-nix-ci-auth
+          nix build -L --no-link '.#nixosConfigurations.${{ matrix.configuration }}.config.system.build.toplevel'
+      - name: Test host configuration
+        env:
+          FIRSTMATE_NIX_TOKEN: ${{ secrets.FIRSTMATE_NIX_READ_TOKEN }}
+        run: |
+          source scripts/firstmate-nix-ci-auth
+          nix eval --impure --expr 'import ./tests/firstmate-tools.nix { flake = builtins.getFlake (toString ./.); }' --apply 'x: assert x; x'
+          ./tests/agent-instructions.sh "${{ matrix.configuration }}"
+          ./tests/agent-extensions.sh "${{ matrix.configuration }}"
+          ./tests/mise-install.sh "${{ matrix.configuration }}"
+          ./tests/nvim-open.sh "${{ matrix.configuration }}"

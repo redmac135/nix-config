@@ -34,6 +34,27 @@
         "type": "github"
       }
     },
+    "firstmate-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1794953923,
+        "narHash": "sha256-F/Tev+cXtiGMArAchk2TFHkAYkrcZisRW8H2u/GBk0A=",
+        "ref": "dev",
+        "rev": "b03e1825d4dc1abff3c380cc6d74c79ea89b161c",
+        "revCount": 2,
+        "type": "git",
+        "url": "https://github.com/redmac135/firstmate-nix.git"
+      },
+      "original": {
+        "ref": "dev",
+        "type": "git",
+        "url": "https://github.com/redmac135/firstmate-nix.git"
+      }
+    },
     "flake-compat": {
       "flake": false,
       "locked": {
@@ -199,6 +220,7 @@
     },
     "root": {
       "inputs": {
+        "firstmate-nix": "firstmate-nix",
         "home-manager": "home-manager",
         "llm-agents": "llm-agents",
         "nixos-wsl": "nixos-wsl",

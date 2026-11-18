@@ -15,6 +15,9 @@
 
     llm-agents.url = "github:numtide/llm-agents.nix";
 
+    firstmate-nix.url = "git+https://github.com/redmac135/firstmate-nix.git?ref=dev";
+    firstmate-nix.inputs.nixpkgs.follows = "nixpkgs";
+
     treehouse.url = "github:kunchenguid/treehouse";
     treehouse.inputs.nixpkgs.follows = "nixpkgs";
   };
@@ -25,6 +28,7 @@
     nixos-wsl,
     home-manager,
     llm-agents,
+    firstmate-nix,
     treehouse,
     ...
   }: let
@@ -53,6 +57,7 @@
 
           {
             nixpkgs.overlays = [
+              firstmate-nix.overlays.default
               (
                 final: prev:
                   {
@@ -70,10 +75,6 @@
                   // import ./packages/no-mistakes.nix {
                     inherit (final) lib;
                     pkgs = final;
-                  }
-                  // import ./packages/npm-packages.nix {
-                    pkgs = final;
-                    inherit (final) lib;
                   }
               )
             ];

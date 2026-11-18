@@ -14,9 +14,7 @@ Update one input per PR with `nix flake update <input>`, review `flake.lock`, an
 
 ## Packaging npm tools
 
-`packages/npm-packages.nix` builds pinned npm packages exposed under `pkgs.npmPkgs`; the Go `no-mistakes` derivation is in `packages/no-mistakes.nix`.
-
-- Use `scripts/update-npm-packages` to preview or apply version and lockfile updates for any package declared through `mkNpmTool`.
+Firstmate npm tools are provided by the `firstmate-nix` flake input under `pkgs.firstmateTools`; the Go `no-mistakes` derivation is in `packages/no-mistakes.nix`.
 
 ## Neovim organization
 

@@ -1,4 +1,4 @@
-name: Update npm packages, no-mistakes, and flake inputs
+name: Update no-mistakes and flake inputs
 
 on:
   workflow_dispatch:
@@ -24,13 +24,12 @@ jobs:
         with:
           extra_nix_config: accept-flake-config = true
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: 22
-
-      - name: Update npm packages, no-mistakes, and flake inputs
-        run: ./scripts/update-npm-packages-and-flake
+      - name: Update no-mistakes and flake inputs
+        env:
+          FIRSTMATE_NIX_TOKEN: ${{ secrets.FIRSTMATE_NIX_READ_TOKEN }}
+        run: |
+          source scripts/firstmate-nix-ci-auth
+          ./scripts/update-dependencies
 
       - name: Summarize version changes
         id: summary
@@ -41,7 +40,7 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           base: dev
-          branch: automation/update-npm-packages
+          branch: automation/update-dependencies
           delete-branch: true
           commit-message: "chore: update pinned dependencies"
           title: "chore: update pinned dependencies"
