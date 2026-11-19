@@ -86,6 +86,29 @@ installation is named `NixOS` (or change `config.default_domain` in the
 WezTerm file to match it). The `HOME` working directory is resolved inside
 WSL, not from a private Windows path.
 
+### Firstmate primary notifications
+
+On WSL, opt in when starting the primary Pi from the Firstmate home:
+
+```bash
+export FM_HOME="$PWD"
+pi -e "$HOME/.local/share/firstmate/pi-notify.ts"
+```
+
+The hook is not globally loaded. It runs only in a WSL interactive Pi whose
+working directory is the Firstmate home, and refuses secondmate homes. Normal
+worker launches do not load it. Start Pi without `-e` to disable it. A completed
+primary response or blocking Pi dialog sends a fixed, private-text-free Windows
+PowerShell toast; streaming, tool calls, aborted turns, and the bare
+`MONITOR_NOTIFICATION_HANDLED` acknowledgement do not. A single settled message
+is notified at most once. This uses Windows interop, not Herdr's global agent
+notifications, so leave those off if worker notifications are unwanted.
+
+Windows may suppress banners depending on notification and Focus settings. The
+PowerShell notification must be enabled in Windows; it appears under Windows
+PowerShell rather than WezTerm. Toast registration was checked in Windows
+notification history, but a visible banner and focus behavior were not verified.
+
 ## GitHub Copilot in Neovim
 
 The Neovim configuration includes GitHub Copilot inline suggestions and
