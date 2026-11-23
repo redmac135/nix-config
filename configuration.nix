@@ -37,6 +37,11 @@
   # Enable Docker daemon at system level
   virtualisation.docker.enable = true;
 
+  services.avahi = {
+    enable = true;
+    nssmdns4 = true;
+  };
+
   services.openssh = {
     enable = true;
 
