@@ -259,6 +259,8 @@ in {
   home.file.".claude/CLAUDE.md".text = "@~/.AGENTS.md\n";
   home.file.".codex/AGENTS.md".source = ./files/AGENTS.md;
   home.file.".pi/agent/AGENTS.md".source = ./files/AGENTS.md;
+  # Explicitly loaded only by the Firstmate primary, never as a global Pi hook.
+  home.file.".local/share/firstmate/pi-notify.ts".source = ./files/firstmate/pi-notify.ts;
 
   home.activation.installAgentExtensions = lib.hm.dag.entryAfter ["writeBoundary"] ''
     if ! ${herdr}/bin/herdr integration status | ${pkgs.gnugrep}/bin/grep -Fq 'pi: current'; then
